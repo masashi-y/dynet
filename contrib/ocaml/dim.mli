@@ -1,7 +1,7 @@
 
 type t
 
-val make : unit -> t
+val make : ?batch:int -> int array -> t
 val size : t -> int
 val batch_size : t -> int
 val truncate : t -> t
@@ -16,3 +16,5 @@ val set : t -> int -> int -> unit
 val get : t -> int -> int
 
 val transpose : t -> t
+
+val show : t -> string

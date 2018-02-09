@@ -3,6 +3,7 @@
 %{
 #include <sstream>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <stdexcept>
 #include "param-init.h"
@@ -65,11 +66,9 @@ struct LookupParameterStorage;
 // declarations from dynet/dim.h //
 ///////////////////////////////////
 
-%rename(get) Dim::operator[];
-
 struct Dim {
-    Dim() : nd(0), bd(1) {}
-    Dim(const std::vector<long> & x);
+    /* Dim() : nd(0), bd(1) {} */
+    /* Dim(const std::vector<long> & x); */
     Dim(const std::vector<long> & x, unsigned int b);
 
     unsigned int size();
@@ -121,3 +120,13 @@ void initialize(int& argc, char**& argv, bool shared_parameters = false);
 void cleanup();
 
 }
+
+%{
+std::string dim_show(dynet::Dim& d) {
+    std::stringstream os;
+    os << d;
+    return os.str();
+}
+%}
+std::string dim_show(dynet::Dim& d) const;
+
