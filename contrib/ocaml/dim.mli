@@ -1,5 +1,7 @@
 
-type t
+open Swig
+
+type t = c_obj
 
 val make : ?batch:int -> int array -> t
 val size : t -> int
