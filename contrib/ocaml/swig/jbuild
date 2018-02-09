@@ -1,0 +1,12 @@
+
+(rule (
+    (targets (swigp4.ml))
+    (action (run ${bin:swig} -ocaml -co ${@}))
+))
+
+(library (
+    (name swigp4)
+    (preprocess (action (system "camlp4o pa_extend.cmo q_MLast.cmo ${<}")))
+    (libraries (camlp4))
+))
+

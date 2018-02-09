@@ -1,0 +1,4 @@
+B ../_build/default/swig
+FLG -w -40
+PKG camlp4
+S .

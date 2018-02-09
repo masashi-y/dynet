@@ -1,0 +1,28 @@
+(jbuild_version 1)
+
+(rule (
+    (targets (swig.ml))
+    (action (run ${bin:swig} -ocaml -co ${@}))
+))
+
+(rule (
+    (targets (swig.mli))
+    (action (run ${bin:swig} -ocaml -co ${@}))
+))
+
+(rule (
+    (targets (dynet_swig_wrap.cxx.c dynet_swig.ml dynet_swig.mli))
+    (deps (dynet_swig.i))
+    (action (run ${bin:swig} -c++ -ocaml -o dynet_swig_wrap.cxx.c ${<}))
+))
+
+(library (
+    (name dynet)
+    (preprocess (action (system "camlp4o -I swig pa_extend.cmo q_MLast.cmo swigp4.cmo ${<}")))
+    (preprocessor_deps (swig/swigp4.cmo))
+    (c_names (dynet_swig_wrap.cxx))
+    (c_flags (-xc++ -I../../../../dynet -I../../../../Eigen -I../../../.. -std=c++11 -DCAML_NAME_SPACE=1))
+    (c_library_flags (-lstdc++ -L../../../../build/dynet -ldynet))
+    (libraries (camlp4))
+))
+
