@@ -1,4 +1,5 @@
 
+open Swig
 open Params
 type t
 
@@ -45,3 +46,6 @@ val clip_gradients : t -> float
 val rescale_and_reset_weight_decay : t -> unit
 
 val status : t -> unit
+
+val to_ptr : t -> c_obj
+val from_ptr : c_obj -> t

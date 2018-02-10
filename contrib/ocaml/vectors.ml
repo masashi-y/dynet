@@ -14,7 +14,7 @@ end
 
 module type VECTOR =
 sig
-    type t = c_obj
+    type t
     type value
     val make : value array -> t
 
@@ -30,6 +30,8 @@ sig
     val map : (value -> 'a) -> t -> 'a list
     val iter : (value -> unit) -> t -> unit
     val show : t -> string
+    val to_ptr : t -> c_obj
+    val from_ptr : c_obj -> t
 end
 
 module Vector (Base : VECTORBASE)
@@ -81,6 +83,8 @@ struct
         done;
         Buffer.contents buf
 
+    let to_ptr t = t
+    let from_ptr t = t
 end
 
 module IntVector
@@ -143,6 +147,21 @@ module StringVector
     end
 )
 
+module ExpressionVector
+    : VECTOR with type value = Expression.t = Vector (
+    struct
+        type t = Expression.t
+        let new_vector = new_ExpressionVector
+        let from_t = Expression.to_ptr
+        let to_t = Expression.from_ptr
+        let zero = Expression.null
+        let show i = match '& (from_t i) with
+            | C_ptr (i, j) -> Printf.sprintf "Expression at (%Ld, %Ld)" i j
+            | _ -> invalid_arg "never occur"
+    end
+)
+
+(*
 let print_intvector v = IntVector.(
     for i = 0 to (size v) - 1 do
         if i > 0 then
@@ -152,7 +171,6 @@ let print_intvector v = IntVector.(
     print_endline ""
 )
 
-(*
 let () = IntVector.(
     let v = make [|1;2;3;4|] in
     print_intvector v; Printf.printf "%i\n" (size v);

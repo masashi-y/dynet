@@ -5,7 +5,7 @@ open Vectors
 
 module Parameter :
 sig
-    type t = c_obj
+    type t
 
     val zero : t -> unit
     val dim : t -> Dim.t
@@ -13,13 +13,16 @@ sig
     val set_updated : t -> bool -> unit
     val is_updated : t -> bool
     val values : t -> Tensor.t
+
+    val to_ptr : t -> c_obj
+    val from_ptr : c_obj -> t
 end
 
 module ParameterVector : VECTOR with type value = Parameter.t
 
 module LookupParameter :
 sig
-    type t = c_obj
+    type t
 
     val initialize : t -> int -> FloatVector.t -> unit
     val zero : t -> unit
@@ -28,11 +31,14 @@ sig
     (* val values : t -> TensorVector.t *)
     val set_updated : t -> bool -> unit
     val is_updated : t -> bool
+
+    val to_ptr : t -> c_obj
+    val from_ptr : c_obj -> t
 end
 
 module ParameterInit :
 sig
-    type t = c_obj
+    type t
 
     val normal : ?m:float -> ?v:float -> t
     val uniform : float -> t
@@ -44,11 +50,13 @@ sig
 
     val initialize_params : t -> Tensor.t -> unit
 
+    val to_ptr : t -> c_obj
+    val from_ptr : c_obj -> t
 end
 
 module ParameterCollection :
 sig
-    type t = c_obj
+    type t
 
     val make : unit -> t
 
@@ -57,4 +65,7 @@ sig
 
     val add_parameters : ?init:ParameterInit.t -> ?scale:float -> t -> Dim.t -> Parameter.t
     val add_lookup_parameters : ?init:ParameterInit.t -> t -> int -> Dim.t -> LookupParameter.t
+
+    val to_ptr : t -> c_obj
+    val from_ptr : c_obj -> t
 end

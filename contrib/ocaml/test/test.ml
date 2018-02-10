@@ -33,7 +33,7 @@ let () =
                 FloatVector.set x_values 1 (if x2 > 0 then 1.0 else -1.0);
                 FloatVector.set y_values 0 (if x1 != x2 then 1.0 else -1.0);
                 let loss = Tensor.as_scalar (Computationgraph.forward cg loss_expr) in
-                Computationgraph.backward loss_expr;
+                Computationgraph.backward cg loss_expr;
                 Trainer.update trainer;
                 prev_loss +. loss) in
             Printf.printf "E = %f\n" (loss /. 4.0)

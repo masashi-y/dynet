@@ -1,9 +1,8 @@
 
 open Swig
 open Params
-open Expr
 
-type t = c_obj
+type t
 
 val _with : (t -> 'a) -> 'a
 
@@ -27,3 +26,6 @@ val invalidate : t -> unit
 val backward : t -> Expression.t -> unit
 
 val print_graphviz : t -> unit
+
+val to_ptr : t -> c_obj
+val from_ptr : c_obj -> t

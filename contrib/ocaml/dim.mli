@@ -1,7 +1,7 @@
 
 open Swig
 
-type t = c_obj
+type t
 
 val make : ?batch:int -> int array -> t
 val size : t -> int
@@ -20,3 +20,6 @@ val get : t -> int -> int
 val transpose : t -> t
 
 val show : t -> string
+
+val to_ptr : t -> c_obj
+val from_ptr : c_obj -> t

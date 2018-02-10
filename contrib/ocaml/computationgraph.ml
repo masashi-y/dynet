@@ -1,5 +1,6 @@
 
 open Swig
+open Params
 open Dynet_swig
 
 type t = c_obj
@@ -9,20 +10,27 @@ let _with f =
     let res = f cg in
     '~ cg; res
 
-let add_parameters cg p = (cg -> add_parameters (p)) as int
-let add_const_parameters cg p = (cg -> add_const_parameters (p)) as int
-let add_lookup cg p i = (cg -> add_lookup (p, (i to int))) as int
-let add_const_lookup cg p i = (cg -> add_const_lookup (p, (i to int))) as int
+let add_parameters cg p =
+    (cg -> add_parameters ((Parameter.to_ptr p))) as int
+
+let add_const_parameters cg p =
+    (cg -> add_const_parameters ((Parameter.to_ptr p))) as int
+
+let add_lookup cg p i =
+    (cg -> add_lookup ((Parameter.to_ptr p), (i to int))) as int
+
+let add_const_lookup cg p i =
+    (cg -> add_const_lookup ((Parameter.to_ptr p), (i to int))) as int
 
 let clear cg = ignore (cg -> clear ())
 let checkpoint cg = ignore (cg -> checkpoint ())
 let revert cg = ignore (cg -> revert ())
 
-let get_dimension cg i = cg -> get_dimension (i)
+let get_dimension cg i = Dim.from_ptr (cg -> get_dimension (i))
 
-let forward cg x = cg -> forward_one (x)
-let incremental_forward cg x = cg -> incremental_forward (x)
-let get_value cg x = cg -> get_value (x)
+let forward cg x = Tensor.from_ptr (cg -> forward_one (x))
+let incremental_forward cg x = Tensor.from_ptr (cg -> incremental_forward (x))
+let get_value cg x = Tensor.from_ptr (cg -> get_value (x))
 
 let invalidate cg = ignore (cg -> invalidate ())
 
@@ -30,6 +38,8 @@ let backward cg x = ignore (cg -> backward (x))
 
 let print_graphviz cg = ignore (cg -> print_graphviz ())
 
+let to_ptr t = t
+let from_ptr t = t
 (*
 struct ComputationGraph {
   ComputationGraph();

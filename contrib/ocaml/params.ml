@@ -8,11 +8,14 @@ struct
     type t = c_obj
 
     let zero p = ignore (p -> zero ())
-    let dim p = p -> dim ()
+    let dim p = Dim.from_ptr (p -> dim ())
     
     let set_updated p b = ignore (p -> set_updated ((b to bool)))
     let is_updated p = (p -> is_updated ()) as bool
-    let values p = p -> values ()
+    let values p = Tensor.from_ptr (p -> values ())
+
+    let to_ptr t = t
+    let from_ptr t = t
 end
 
 module ParameterVector
@@ -33,13 +36,17 @@ module LookupParameter =
 struct
     type t = c_obj
 
-    let initialize p i vs = ignore (p -> initialize ((i to int), vs))
+    let initialize p i vs =
+        ignore (p -> initialize ((i to int), (FloatVector.to_ptr vs)))
     let zero p = ignore (p -> zero ())
-    let dim p = p -> dim ()
+    let dim p = Dim.from_ptr (p -> dim ())
     
     let values p = p -> values ()
     let set_updated p b = ignore (p -> set_updated ((b to bool)))
     let is_updated p = (p -> is_updated ()) as bool
+
+    let to_ptr t = t
+    let from_ptr t = t
 end
 
 module ParameterInit =
@@ -59,9 +66,12 @@ struct
     let from_file f =
         new_ParameterInitFromFile ((f to string))
     let from_vector v =
-        new_ParameterInitFromVector v
+        new_ParameterInitFromVector (FloatVector.to_ptr v)
 
     let initialize_params p t = ignore (p -> initialize_params (t))
+
+    let to_ptr t = t
+    let from_ptr t = t
 end
 
 
@@ -128,6 +138,7 @@ struct
     let reset_gradient p = ignore (p -> reset_gradient ())
 
     let add_parameters ?init ?(scale=1.0) p dim =
+        let dim = Dim.to_ptr dim in
         let init = match init with
         | None -> if scale = 0.0 then
             ParameterInit.glorot ()
@@ -137,9 +148,13 @@ struct
         in p -> add_parameters (dim, init)
 
     let add_lookup_parameters ?init p n dim =
+        let dim = Dim.to_ptr dim in
         match init with
         | None -> p -> add_lookup_parameters ((n to int), dim)
         | Some init -> p -> add_lookup_parameters ((n to int), dim, init)
+
+    let to_ptr t = t
+    let from_ptr t = t
 end
 (*
 class ParameterCollection {

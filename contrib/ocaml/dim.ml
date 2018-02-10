@@ -8,7 +8,7 @@ type t = c_obj
 let make ?(batch=1) arr =
     let v = LongVector.make arr in
     let batch = batch to int in
-    new_Dim '(v, batch)
+    new_Dim '((LongVector.to_ptr v), batch)
 
 let size d = ((d -> size ()) as int)
 let batch_size d = ((d -> batch_size ()) as int)
@@ -33,3 +33,6 @@ let show d = ((_dim_show d) as string)
 "delete_dim"
 
 *)
+
+let to_ptr t = t
+let from_ptr t = t

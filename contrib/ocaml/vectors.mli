@@ -14,7 +14,7 @@ end
 
 module type VECTOR =
 sig
-    type t = c_obj
+    type t
     type value
     val make : value array -> t
 
@@ -30,6 +30,8 @@ sig
     val map : (value -> 'a) -> t -> 'a list
     val iter : (value -> unit) -> t -> unit
     val show : t -> string
+    val to_ptr : t -> c_obj
+    val from_ptr : c_obj -> t
 end
 
 module Vector (Base : VECTORBASE) : VECTOR with type value = Base.t
@@ -44,3 +46,4 @@ module DoubleVector : VECTOR with type value = float
 
 module StringVector : VECTOR with type value = string
 
+module ExpressionVector : VECTOR with type value = Expression.t
