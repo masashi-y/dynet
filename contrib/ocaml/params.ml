@@ -1,6 +1,7 @@
 
 open Swig
 open Dynet_swig
+open Vectors
 
 module Parameter =
 struct
@@ -13,6 +14,20 @@ struct
     let is_updated p = (p -> is_updated ()) as bool
     let values p = p -> values ()
 end
+
+module ParameterVector
+    : VECTOR with type value = Parameter.t = Vector (
+    struct
+        type t = Parameter.t
+        let new_vector = new_ParameterVector
+        let from_t i = i
+        let to_t i = i
+        let zero = C_void
+        let show i = match '&i with
+            | C_ptr (i, j) -> Printf.sprintf "Parameter at (%Ld, %Ld)" i j
+            | _ -> invalid_arg "never occur"
+    end
+)
 
 module LookupParameter =
 struct
@@ -30,88 +45,24 @@ end
 module ParameterInit =
 struct
     type t = c_obj
+
+    let normal ?(m=0.0) ?(v=1.0) =
+        new_ParameterInitNormal '((m to float), (v to float))
+    let uniform scale =
+        new_ParameterInitUniform '((scale to float))
+    let const c =
+        new_ParameterInitConst ((c to float))
+    let identity () =
+        new_ParameterInitIdentity '()
+    let glorot ?(is_lookup=false) () =
+        new_ParameterInitGlorot ((is_lookup to bool))
+    let from_file f =
+        new_ParameterInitFromFile ((f to string))
+    let from_vector v =
+        new_ParameterInitFromVector v
+
+    let initialize_params p t = ignore (p -> initialize_params (t))
 end
-(*
-struct ParameterInit {
-  ParameterInit() {}
-  virtual ~ParameterInit() {}
-  virtual void initialize_params(Tensor & values) const = 0;
-};
-*)
-let parameter_init_normal ?(m=0.0) ?(v=1.0) =
-    new_ParameterInitNormal '((m to float), (v to float))
-(*
-struct ParameterInitNormal : public ParameterInit {
-  ParameterInitNormal(float m = 0.0f, float v = 1.0f) : mean(m), var(v) {}
-  virtual void initialize_params(Tensor& values) const override;
- private:
-  float mean, var;
-};
-*)
-let parameter_init_uniform scale =
-    new_ParameterInitUniform '((scale to float))
-(*
-struct ParameterInitUniform : public ParameterInit {
-  ParameterInitUniform(float scale) :
-    left(-scale), right(scale) { assert(scale != 0.0f); }
-  ParameterInitUniform(float l, float r) : left(l), right(r) { assert(l != r); }
-  virtual void initialize_params(Tensor & values) const override;
- private:
-  float left, right;
-};
-*)
-let parameter_init_const c =
-    new_ParameterInitConst ((c to float))
-(*
-struct ParameterInitConst : public ParameterInit {
-  ParameterInitConst(float c) : cnst(c) {}
-  virtual void initialize_params(Tensor & values) const override;
-private:
-  float cnst;
-};
-*)
-
-let parameter_init_identity () =
-    new_ParameterInitIdentity '()
-(*
-struct ParameterInitIdentity : public ParameterInit {
-  ParameterInitIdentity() {}
-  virtual void initialize_params(Tensor & values) const override;
-};
-*)
-let parameter_init_glorot ?(is_lookup=false) () =
-    new_ParameterInitGlorot ((is_lookup to bool))
-(*
-struct ParameterInitGlorot : public ParameterInit {
-  ParameterInitGlorot(bool is_lookup = false) : lookup(is_lookup) {}
-  virtual void initialize_params(Tensor & values) const override;
-private:
-  bool lookup;
-};
-*)
-
-let parameter_init_from_file f =
-    new_ParameterInitFromFile ((f to string))
-
-(*
-struct ParameterInitFromFile : public ParameterInit {
-  ParameterInitFromFile(std::string f) : filename(f) {}
-  virtual void initialize_params(Tensor & values) const override;
-private:
-  std::string filename;
-};
-*)
-
-let parameter_init_from_vector v =
-    new_ParameterInitFromVector v
-(*
-struct ParameterInitFromVector : public ParameterInit {
-  ParameterInitFromVector(std::vector<float> v) : vec(v) {}
-  virtual void initialize_params(Tensor & values) const override;
-private:
-  std::vector<float> vec;
-};
-*)
 
 
 
@@ -176,16 +127,16 @@ struct
     let gradient_l2_norm p = (p -> gradient_l2_norm ()) as float
     let reset_gradient p = ignore (p -> reset_gradient ())
 
-    let add_parameters ?(init=None) p dim scale =
+    let add_parameters ?init ?(scale=1.0) p dim =
         let init = match init with
         | None -> if scale = 0.0 then
-            parameter_init_glorot ()
+            ParameterInit.glorot ()
         else
-            parameter_init_uniform scale
+            ParameterInit.uniform scale
         | Some init -> init
         in p -> add_parameters (dim, init)
 
-    let add_lookup_parameters ?(init=None) p n dim =
+    let add_lookup_parameters ?init p n dim =
         match init with
         | None -> p -> add_lookup_parameters ((n to int), dim)
         | Some init -> p -> add_lookup_parameters ((n to int), dim, init)

@@ -9,6 +9,7 @@ sig
     val from_t : t -> c_obj
     val to_t : c_obj -> t
     val zero : t
+    val show : t -> string
 end
 
 module type VECTOR =
@@ -28,6 +29,7 @@ sig
     val fold_right : (value -> 'a -> 'a) -> t -> 'a -> 'a
     val map : (value -> 'a) -> t -> 'a list
     val iter : (value -> unit) -> t -> unit
+    val show : t -> string
 end
 
 module Vector (Base : VECTORBASE)
@@ -69,6 +71,16 @@ struct
 
     let map f v = fold_left (fun accum e -> f e::accum) [] v
     let iter f v = fold_left (fun () e -> f e) () v
+
+    let show v = 
+        let buf = Buffer.create 10 in
+        for i = 0 to (size v) - 1 do
+            if i > 0 then
+                Buffer.add_string buf ", ";
+            Buffer.add_string buf (Base.show (get v i))
+        done;
+        Buffer.contents buf
+
 end
 
 module IntVector
@@ -79,6 +91,55 @@ module IntVector
         let from_t i = i to int
         let to_t i = i as int
         let zero = 0
+        let show = string_of_int
+    end
+)
+
+module LongVector
+    : VECTOR with type value = int = Vector (
+    struct
+        type t = int
+        let new_vector = new_LongVector
+        let from_t i = i to int
+        let to_t i = i as int
+        let zero = 0
+        let show = string_of_int
+    end
+)
+
+module FloatVector
+    : VECTOR with type value = float = Vector (
+    struct
+        type t = float
+        let new_vector = new_FloatVector
+        let from_t i = i to float
+        let to_t i = i as float
+        let zero = 0.0
+        let show = string_of_float
+    end
+)
+
+module DoubleVector
+    : VECTOR with type value = float = Vector (
+    struct
+        type t = float
+        let new_vector = new_DoubleVector
+        let from_t i = i to float
+        let to_t i = i as float
+        let zero = 0.0
+        let show = string_of_float
+    end
+)
+
+module StringVector
+    : VECTOR with type value = string = Vector (
+    struct
+        type t = string
+        let new_vector = new_StringVector
+        let from_t i = i to string
+        let to_t i = i as string
+        let zero = "0"
+        let show x = x
     end
 )
 
@@ -91,39 +152,7 @@ let print_intvector v = IntVector.(
     print_endline ""
 )
 
-module LongVector
-    : VECTOR with type value = int = Vector (
-    struct
-        type t = int
-        let new_vector = new_LongVector
-        let from_t i = i to int
-        let to_t i = i as int
-        let zero = 0
-    end
-)
-
-module FloatVector
-    : VECTOR with type value = float = Vector (
-    struct
-        type t = float
-        let new_vector = new_FloatVector
-        let from_t i = i to float
-        let to_t i = i as float
-        let zero = 0.0
-    end
-)
-
-module DoubleVector
-    : VECTOR with type value = float = Vector (
-    struct
-        type t = float
-        let new_vector = new_DoubleVector
-        let from_t i = i to float
-        let to_t i = i as float
-        let zero = 0.0
-    end
-)
-
+(*
 let () = IntVector.(
     let v = make [|1;2;3;4|] in
     print_intvector v; Printf.printf "%i\n" (size v);
@@ -142,7 +171,6 @@ let () = IntVector.(
     Printf.printf "%i\n" (get v 0);
     print_intvector v
 )
-(*
   UnsignedVector
   StringVector
   ExpressionVector

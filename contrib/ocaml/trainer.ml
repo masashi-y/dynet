@@ -1,6 +1,7 @@
 
 open Swig
 open Dynet_swig
+open Vectors
 
 type t = c_obj
 
@@ -29,84 +30,21 @@ let adam ?(learning_rate=0.001) ?(beta_1=0.9) ?(beta_2=0.999) ?(eps=1e-8) m =
 let amsgrad ?(learning_rate=0.001) ?(beta_1=0.9) ?(beta_2=0.999) ?(eps=1e-8) m =
     new_AmsgradTrainer '(m, (learning_rate to float), (beta_1 to float), (beta_2 to float), (eps to float))
 
-(*
-// Need to disable constructor as SWIG gets confused otherwise
-%nodefaultctor Trainer;
-struct Trainer {
-  virtual void update();
-  //void update(const std::vector<unsigned> & updated_params, const std::vector<unsigned> & updated_lookup_params);
-  void update_epoch(real r = 1.0);
 
-  virtual void restart() = 0;
-  void restart(real lr);
+let update ?update_params ?update_lookup_params t = IntVector.(
+    ignore (match update_params, update_lookup_params with
+    | Some ps, Some lps -> t -> update ((make ps), (make lps))
+    | Some ps, None -> t -> update ((make ps), (make [||]))
+    | None, Some lps -> t -> update ((make [||]), (make lps))
+    | None, None -> t -> update ())
+    )
 
-  float clip_gradients();
-  void rescale_and_reset_weight_decay();
+let update_epoch ?(rate=1.0) t = ignore (t -> update_epoch ((rate to float)))
 
-  real learning_rate;
+let restart t lr = ignore (t -> restart ((lr to float)))
 
-  bool clipping_enabled;
-  real clip_threshold;
-  real clips;
-  real updates;
+let clip_gradients t = (t -> clip_gradients ()) as float
 
-  real clips_since_status;
-  real updates_since_status;
+let rescale_and_reset_weight_decay t = ignore (t -> rescale_and_reset_weight_decay ())
 
-  bool sparse_updates_enabled;
-  unsigned aux_allocated;
-  unsigned aux_allocated_lookup;
-
-  void status();
-
-  ParameterCollection* model;
-};
-
-struct SimpleSGDTrainer : public Trainer {
-  explicit SimpleSGDTrainer(ParameterCollection& m, real learning_rate = 0.1);
-  void restart() override;
-};
-
-struct CyclicalSGDTrainer : public Trainer {
-  explicit CyclicalSGDTrainer(ParameterCollection& m, float learning_rate_min = 0.01, float learning_rate_max = 0.1, float step_size = 2000, float gamma = 0.0, float edecay = 0.0);
-  void restart() override;
-  void update() override;
-};
-
-struct MomentumSGDTrainer : public Trainer {
-  explicit MomentumSGDTrainer(ParameterCollection& m, real learning_rate = 0.01, real mom = 0.9);
-  void restart() override;
-};
-
-struct AdagradTrainer : public Trainer {
-  explicit AdagradTrainer(ParameterCollection& m, real learning_rate = 0.1, real eps = 1e-20);
-  void restart() override;
-};
-
-struct AdadeltaTrainer : public Trainer {
-  explicit AdadeltaTrainer(ParameterCollection& m, real eps = 1e-6, real rho = 0.95);
-  void restart() override;
-};
-
-struct RMSPropTrainer : public Trainer {
-   explicit RMSPropTrainer(ParameterCollection& m, real learning_rate = 0.1, real eps = 1e-20, real rho = 0.95);
-   void restart() override;
-};
-
-struct AdamTrainer : public Trainer {
-  explicit AdamTrainer(ParameterCollection& m, float learning_rate = 0.001, float beta_1 = 0.9, float beta_2 = 0.999, float eps = 1e-8);
-  void restart() override;
-};
-
-struct AmsgradTrainer : public Trainer {
-  explicit AmsgradTrainer(ParameterCollection& m, float learning_rate = 0.001, float beta_1 = 0.9, float beta_2 = 0.999, float eps = 1e-8);
-  void restart() override;
-};
-
-//struct EGTrainer : public Trainer {
-//  explicit EGTrainer(ParameterCollection& mod, real learning_rate = 0.1, real mom = 0.9, real ne = 0.0);
-//  void enableCyclicalLR(float _learning_rate_min = 0.01, float _learning_rate_max = 0.1, float _step_size = 2000, float _gamma = 0.0);
-//  void update() override;
-//  void restart() override;
-//};
-*)
+let status t = ignore (t -> status ())

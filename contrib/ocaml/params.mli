@@ -5,7 +5,7 @@ open Vectors
 
 module Parameter :
 sig
-    type t
+    type t = c_obj
 
     val zero : t -> unit
     val dim : t -> Dim.t
@@ -15,9 +15,11 @@ sig
     val values : t -> Tensor.t
 end
 
+module ParameterVector : VECTOR with type value = Parameter.t
+
 module LookupParameter :
 sig
-    type t
+    type t = c_obj
 
     val initialize : t -> int -> FloatVector.t -> unit
     val zero : t -> unit
@@ -30,10 +32,19 @@ end
 
 module ParameterInit :
 sig
-    type t
-end
+    type t = c_obj
 
-val parameter_init_const : float -> ParameterInit.t
+    val normal : ?m:float -> ?v:float -> t
+    val uniform : float -> t
+    val const : float -> t
+    val identity : unit -> t
+    val glorot : ?is_lookup:bool -> unit -> t
+    val from_file : string -> t
+    val from_vector : FloatVector.t -> t
+
+    val initialize_params : t -> Tensor.t -> unit
+
+end
 
 module ParameterCollection :
 sig
@@ -44,6 +55,6 @@ sig
     val gradient_l2_norm : t -> float
     val reset_gradient : t -> unit
 
-    val add_parameters : ?init:(ParameterInit.t option) -> t -> Dim.t -> float -> Parameter.t
-    val add_lookup_parameters : ?init:(ParameterInit.t option) -> t -> int -> Dim.t -> LookupParameter.t
+    val add_parameters : ?init:ParameterInit.t -> ?scale:float -> t -> Dim.t -> Parameter.t
+    val add_lookup_parameters : ?init:ParameterInit.t -> t -> int -> Dim.t -> LookupParameter.t
 end

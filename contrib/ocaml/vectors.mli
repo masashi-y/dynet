@@ -2,6 +2,16 @@
 open Swig
 open Dynet_swig
 
+module type VECTORBASE =
+sig
+    type t
+    val new_vector : c_obj -> c_obj
+    val from_t : t -> c_obj
+    val to_t : c_obj -> t
+    val zero : t
+    val show : t -> string
+end
+
 module type VECTOR =
 sig
     type t = c_obj
@@ -19,14 +29,18 @@ sig
     val fold_right : (value -> 'a -> 'a) -> t -> 'a -> 'a
     val map : (value -> 'a) -> t -> 'a list
     val iter : (value -> unit) -> t -> unit
+    val show : t -> string
 end
 
-module IntVector : VECTOR with type value = int
+module Vector (Base : VECTORBASE) : VECTOR with type value = Base.t
 
-val print_intvector : IntVector.t -> unit
+module IntVector : VECTOR with type value = int
 
 module LongVector : VECTOR with type value = int
 
 module FloatVector : VECTOR with type value = float
 
 module DoubleVector : VECTOR with type value = float
+
+module StringVector : VECTOR with type value = string
+
