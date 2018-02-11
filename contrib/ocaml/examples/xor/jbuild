@@ -1,6 +1,6 @@
 
 (executable (
-    (name test)
+    (name xor)
     (libraries (dynet))
     (flags (-ccopt -lstdc++))
 ))

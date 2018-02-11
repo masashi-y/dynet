@@ -19,7 +19,7 @@ val fast_lstm : int -> int -> int -> ParameterCollection.t -> t
 
 val state : t -> int
 val new_graph : ?update:bool -> t -> Computationgraph.t -> unit
-val start_new_sequence : t -> ExpressionVector.t -> unit
+val start_new_sequence : ?init:ExpressionVector.t -> t -> unit
 
 val set_h : t -> int -> ExpressionVector.t -> Expression.t
 val set_s : t -> int -> ExpressionVector.t -> Expression.t

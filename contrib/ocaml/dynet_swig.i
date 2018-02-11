@@ -453,8 +453,8 @@ Expression logsumexp_dim(const Expression& x, unsigned d);
 %template(logsumexp) detail::f<LogSumExp, std::vector<Expression>>;
 
 Expression pickneglogsoftmax(const Expression& x, unsigned v);
-Expression pickneglogsoftmax(const Expression& x, const unsigned* pv);
-Expression pickneglogsoftmax(const Expression& x, const std::vector<unsigned>& v);
+/* Expression pickneglogsoftmax(const Expression& x, const unsigned* pv); */
+/* Expression pickneglogsoftmax(const Expression& x, const std::vector<unsigned>& v); */
 
 Expression hinge(const Expression& x, unsigned index, float m = 1.0);
 Expression hinge(const Expression& x, unsigned* pindex, float m = 1.0);
@@ -514,7 +514,7 @@ inline Expression concatenate(const std::vector<Expression>& xs, unsigned d = 0)
 
 Expression concatenate_to_batch(const std::vector<Expression>& xs);
 Expression concatenate_cols(const std::vector<Expression>& xs);
-Expression concatenate(const std::vector<Expression>& xs, unsigned d = 0);
+Expression concatenate(const std::vector<Expression>& xs, unsigned d);
 
 Expression max_dim(const Expression& x, unsigned d = 0);
 Expression min_dim(const Expression& x, unsigned d = 0);
@@ -663,10 +663,6 @@ struct Trainer {
 
   ParameterCollection* model;
 };
-
-%typemap(out) const Tensor& {
-    $result = const_cast<Tensor&>($1);
-}
 
 struct SimpleSGDTrainer : public Trainer {
   explicit SimpleSGDTrainer(ParameterCollection& m, real learning_rate = 0.1);

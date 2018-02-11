@@ -16,8 +16,8 @@ let const_parameter cg p =
 let const_lookup_parameter cg p =
     E.from_ptr (_const_parameter_LookupParameter '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p)))
 
-let lookup cg p i = E.from_ptr (_lookup '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (i to int)))
-let const_lookup cg p i = E.from_ptr (_const_lookup '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (i to int)))
+let lookup cg p i = E.from_ptr (_lookup '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (i to uint)))
+let const_lookup cg p i = E.from_ptr (_const_lookup '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (i to uint)))
 
 let lookup_batch cg p v =
     E.from_ptr (_lookup_vector '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (UnsignedVector.(to_ptr (of_array v)))))
@@ -57,20 +57,21 @@ let random_bernoulli ?(scale=1.0) cg dim p = E.from_ptr (_random_bernoulli '((Co
 let random_uniform cg dim left right = E.from_ptr (_random_uniform '((Computationgraph.to_ptr cg), (Dim.to_ptr dim), (left to float), (right to float)))
 let random_gumbel ?(mu=0.0) ?(beta=1.0) cg dim = E.from_ptr (_random_gumbel '((Computationgraph.to_ptr cg), (Dim.to_ptr dim), (mu to float), (beta to float)))
 
+let sum xs = E.from_ptr (_sum '((ExpressionVector.(to_ptr (of_array xs)))))
 let sum_elems x = E.from_ptr (_sum_elems '((E.to_ptr x)))
-let moment_elems x r = E.from_ptr (_moment_elems '((E.to_ptr x), (r to int)))
+let moment_elems x r = E.from_ptr (_moment_elems '((E.to_ptr x), (r to uint)))
 let mean_elems x = E.from_ptr (_mean_elems '((E.to_ptr x)))
 let std_elems x = E.from_ptr (_std_elems '((E.to_ptr x)))
 
 let sum_batches x = E.from_ptr (_sum_batches '((E.to_ptr x)))
-let moment_batches x r = E.from_ptr (_moment_batches '((E.to_ptr x), (r to int)))
+let moment_batches x r = E.from_ptr (_moment_batches '((E.to_ptr x), (r to uint)))
 let mean_batches x = E.from_ptr (_mean_batches '((E.to_ptr x)))
 let std_batches x = E.from_ptr (_std_batches '((E.to_ptr x)))
 
 let sum_dim ?(b=false) x dims = E.from_ptr (_sum_dim '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array dims))), (b to bool)))
-let moment_dim ?(b=false) ?(n=0) x dims r = E.from_ptr (_moment_dim '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array dims))), (r to int), (b to bool), (n to int)))
-let mean_dim ?(b=false) ?(n=0) x dims = E.from_ptr (_mean_dim '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array dims))), (b to bool), (n to int)))
-let std_dim ?(b=false) ?(n=0) x dims = E.from_ptr (_std_dim '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array dims))), (b to bool), (n to int)))
+let moment_dim ?(b=false) ?(n=0) x dims r = E.from_ptr (_moment_dim '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array dims))), (r to uint), (b to bool), (n to uint)))
+let mean_dim ?(b=false) ?(n=0) x dims = E.from_ptr (_mean_dim '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array dims))), (b to bool), (n to uint)))
+let std_dim ?(b=false) ?(n=0) x dims = E.from_ptr (_std_dim '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array dims))), (b to bool), (n to uint)))
 
 let sqrt x = E.from_ptr (_sqrt '((E.to_ptr x)))
 let abs x = E.from_ptr (_abs '((E.to_ptr x)))
@@ -100,17 +101,17 @@ let colwise_add x b = E.from_ptr (_colwise_add '((E.to_ptr x), (E.to_ptr b)))
 let softmax x = E.from_ptr (_softmax '((E.to_ptr x)))
 let log_softmax x = E.from_ptr (_log_softmax '((E.to_ptr x)))
 let log_softmax x restriction = E.from_ptr (_log_softmax '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array restriction)))))
-let logsumexp_dim x d = E.from_ptr (_logsumexp_dim '((E.to_ptr x), (d to int)))
+let logsumexp_dim x d = E.from_ptr (_logsumexp_dim '((E.to_ptr x), (d to uint)))
 
-let pickneglogsoftmax x v = E.from_ptr (_pickneglogsoftmax '((E.to_ptr x), (v to int)))
+let pickneglogsoftmax x v = E.from_ptr (_pickneglogsoftmax '((E.to_ptr x), (v to uint)))
 (* let pickneglogsoftmax x = E.from_ptr (_pickneglogsoftmax '((E.to_ptr x), const unsigned* pv)) *)
 (* let pickneglogsoftmax x = E.from_ptr (_pickneglogsoftmax '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array v))))) *)
 
-let hinge ?(m=1.0) x index = E.from_ptr (_hinge '((E.to_ptr x), (index to int), (m to float)))
+let hinge ?(m=1.0) x index = E.from_ptr (_hinge '((E.to_ptr x), (index to uint), (m to float)))
 (* let hinge x = E.from_ptr (_hinge '((E.to_ptr x), unsigned* pindex, float m = 1.0)) *)
 (* let hinge x = E.from_ptr (_hinge '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array indices))), float m = 1.0)) *)
 
-let hinge_dim ?(d=0) ?(m=1.0) x indices = E.from_ptr (_hinge_dim '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array indices))), (d to int), (m to float)))
+let hinge_dim ?(d=0) ?(m=1.0) x indices = E.from_ptr (_hinge_dim '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array indices))), (d to uint), (m to float)))
 (* let hinge_dim x = E.from_ptr (_hinge_dim '((E.to_ptr x), const std::vector<std::vector<unsigned> >& indices, unsigned d = 0, float m = 1.0)) *)
 
 let sparsemax x = E.from_ptr (_sparsemax '((E.to_ptr x)))
@@ -124,7 +125,7 @@ let l1_distance x y = E.from_ptr (_l1_distance '((E.to_ptr x), (E.to_ptr y)))
 let huber_distance ?(c=1.345) x y = E.from_ptr (_huber_distance '((E.to_ptr x), (E.to_ptr y), (c to float)))
 let binary_log_loss x y = E.from_ptr (_binary_log_loss '((E.to_ptr x), (E.to_ptr y)))
 let pairwise_rank_loss ?(m=1.0) x y = E.from_ptr (_pairwise_rank_loss '((E.to_ptr x), (E.to_ptr y), (m to float)))
-let poisson_loss x y = E.from_ptr (_poisson_loss '((E.to_ptr x), (y to int)))
+let poisson_loss x y = E.from_ptr (_poisson_loss '((E.to_ptr x), (y to uint)))
 (* let poisson_loss x = E.from_ptr (_poisson_loss '((E.to_ptr x), const unsigned* py)) *)
 
 let nobackprop x = E.from_ptr (_nobackprop '((E.to_ptr x)))
@@ -135,31 +136,31 @@ let transpose x = E.from_ptr (_transpose '((E.to_ptr x)))
 let select_rows x rows = E.from_ptr (_select_rows '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array rows)))))
 let select_cols x cols = E.from_ptr (_select_cols '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array cols)))))
 
-let pick ?(d=0) x v = E.from_ptr (_pick '((E.to_ptr x), (v to int), (d to int)))
-(* let pick ?(d=0) x v = E.from_ptr (_pick '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array v))), (d to int))) *)
-(* let pick ?(d=0) x = E.from_ptr (_pick '((E.to_ptr x), const unsigned* v, (d = 0 to int))) *)
-let pick_range ?(d=0) x s e = E.from_ptr (_pick_range '((E.to_ptr x), (s to int), (e to int), (d to int)))
-let pick_batch_elem x v = E.from_ptr (_pick_batch_elem '((E.to_ptr x), (v to int)))
+let pick ?(d=0) x v = E.from_ptr (_pick '((E.to_ptr x), (v to uint), (d to uint)))
+(* let pick ?(d=0) x v = E.from_ptr (_pick '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array v))), (d to uint))) *)
+(* let pick ?(d=0) x = E.from_ptr (_pick '((E.to_ptr x), const unsigned* v, (d = 0 to uint))) *)
+let pick_range ?(d=0) x s e = E.from_ptr (_pick_range '((E.to_ptr x), (s to uint), (e to uint), (d to uint)))
+let pick_batch_elem x v = E.from_ptr (_pick_batch_elem '((E.to_ptr x), (v to uint)))
 let pick_batch_elems x v = E.from_ptr (_pick_batch_elems '((E.to_ptr x), (UnsignedVector.(to_ptr (of_array v)))))
 
 let concatenate_to_batch xs = E.from_ptr (_concatenate_to_batch '((ExpressionVector.(to_ptr (of_array xs)))))
 let concatenate_cols xs = E.from_ptr (_concatenate_cols '((ExpressionVector.(to_ptr (of_array xs)))))
-let concatenate ?(d=0) xs = E.from_ptr (_concatenate '((ExpressionVector.(to_ptr (of_array xs))), (d to int)))
+let concatenate ?(d=0) xs = E.from_ptr (_concatenate '((ExpressionVector.(to_ptr (of_array xs))), (d to uint)))
 
-let max_dim x d = E.from_ptr (_max_dim '((E.to_ptr x), (d to int)))
-let min_dim x d = E.from_ptr (_min_dim '((E.to_ptr x), (d to int)))
+let max_dim x d = E.from_ptr (_max_dim '((E.to_ptr x), (d to uint)))
+let min_dim x d = E.from_ptr (_min_dim '((E.to_ptr x), (d to uint)))
 
 let noise x stddev = E.from_ptr (_noise '((E.to_ptr x), (stddev to float)))
 let dropout x p = E.from_ptr (_dropout '((E.to_ptr x), (p to float)))
-let dropout_dim x d p = E.from_ptr (_dropout_dim '((E.to_ptr x), (d to int), (p to float)))
+let dropout_dim x d p = E.from_ptr (_dropout_dim '((E.to_ptr x), (d to uint), (p to float)))
 let dropout_batch x p = E.from_ptr (_dropout_batch '((E.to_ptr x), (p to float)))
 let block_dropout x p = E.from_ptr (_block_dropout '((E.to_ptr x), (p to float)))
 
 let filter1d_narrow x f = E.from_ptr (_filter1d_narrow '((E.to_ptr x), (E.to_ptr f)))
-let kmax_pooling x k = E.from_ptr (_kmax_pooling '((E.to_ptr x), (k to int)))
-let fold_rows ?(nrows=2) x = E.from_ptr (_fold_rows '((E.to_ptr x), (nrows to int)))
+let kmax_pooling x k = E.from_ptr (_kmax_pooling '((E.to_ptr x), (k to uint)))
+let fold_rows ?(nrows=2) x = E.from_ptr (_fold_rows '((E.to_ptr x), (nrows to uint)))
 let average_cols x = E.from_ptr (_average_cols '((E.to_ptr x)))
-let kmh_ngram x n = E.from_ptr (_kmh_ngram '((E.to_ptr x), (n to int)))
+let kmh_ngram x n = E.from_ptr (_kmh_ngram '((E.to_ptr x), (n to uint)))
 
 let conv2d ?(is_valid=true) ?bias x f b stride = match bias with
     | Some bias -> E.from_ptr (_conv2d '((E.to_ptr x), (E.to_ptr f), (E.to_ptr bias), (UnsignedVector.(to_ptr (of_array stride))), (is_valid to bool)))

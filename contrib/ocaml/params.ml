@@ -37,7 +37,7 @@ struct
     type t = c_obj
 
     let initialize p i vs =
-        ignore (p -> initialize ((i to int), (FloatVector.to_ptr vs)))
+        ignore (p -> initialize ((i to uint), (FloatVector.to_ptr vs)))
     let zero p = ignore (p -> zero ())
     let dim p = Dim.from_ptr (p -> dim ())
     
@@ -150,8 +150,8 @@ struct
     let add_lookup_parameters ?init p n dim =
         let dim = Dim.to_ptr dim in
         match init with
-        | None -> p -> add_lookup_parameters ((n to int), dim)
-        | Some init -> p -> add_lookup_parameters ((n to int), dim, init)
+        | None -> p -> add_lookup_parameters ((n to uint), dim)
+        | Some init -> p -> add_lookup_parameters ((n to uint), dim, init)
 
     let to_ptr t = t
     let from_ptr t = t

@@ -19,6 +19,8 @@ sig
     val size : t -> int
     val of_array : value array -> t
     val to_array : t -> value array
+    val of_list : value list -> t
+    val to_list : t -> value list
     val make : int -> value -> t
     val empty : t -> bool
     val clear : t -> unit
@@ -50,6 +52,12 @@ struct
         let arr = Array.make (size v) Base.zero in
         ignore (vector_to_array v Base.to_t arr);
         arr
+
+    let of_list lst =
+        of_array (Array.of_list lst)
+
+    let to_list v =
+        Array.to_list (to_array v)
 
     let make n x = of_array (Array.make n x)
 
@@ -108,8 +116,8 @@ module UnsignedVector
     struct
         type t = int
         let new_vector = new_UnsignedVector
-        let from_t i = i to int
-        let to_t i = i as int
+        let from_t i = i to uint
+        let to_t i = i as uint
         let zero = 0
         let show = string_of_int
     end

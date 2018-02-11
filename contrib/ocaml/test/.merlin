@@ -1,6 +1,0 @@
-B ../_build/default
-B ../_build/default/test
-FLG -ccopt -lstdc++
-PKG camlp4
-S .
-S ..

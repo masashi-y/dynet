@@ -1,0 +1,7 @@
+
+(executable (
+    (name tagger)
+    (libraries (dynet utils))
+    (flags (-ccopt -lstdc++))
+))
+
