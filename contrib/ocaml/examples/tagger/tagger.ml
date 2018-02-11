@@ -142,8 +142,8 @@ let () =
         List.iteri (fun i (xs, ys) ->
             let loss = train trainer tagger xs ys in
             Trainer.status trainer;
-            Printf.printf "loss = %f\n%!" loss;
-            if i + 1 mod eval_epoch = 0 then begin
+            Printf.printf "loss: %f\n%!" loss;
+            if (i + 1) mod eval_epoch = 0 then begin
                 let preds = List.map (tag tagger) dev_xs in
                 let index = Random.int (List.length preds) in
                 Printf.printf "accuracy: %f\n\nin: %s\ngold: %s\npred: %s\n%!"
