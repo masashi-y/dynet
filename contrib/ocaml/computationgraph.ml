@@ -28,9 +28,9 @@ let revert cg = ignore (cg -> revert ())
 
 let get_dimension cg i = Dim.from_ptr (cg -> get_dimension (i))
 
-let forward cg x = Tensor.from_ptr (cg -> forward_one (x))
-let incremental_forward cg x = Tensor.from_ptr (cg -> incremental_forward (x))
-let get_value cg x = Tensor.from_ptr (cg -> get_value (x))
+let forward cg x = Tensor.from_ptr (cg -> forward_deref (x))
+let incremental_forward cg x = Tensor.from_ptr (cg -> incremental_forward_deref (x))
+let get_value cg x = Tensor.from_ptr (cg -> get_value_deref (x))
 
 let invalidate cg = ignore (cg -> invalidate ())
 

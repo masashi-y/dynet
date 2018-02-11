@@ -33,7 +33,7 @@ let amsgrad ?(learning_rate=0.001) ?(beta_1=0.9) ?(beta_2=0.999) ?(eps=1e-8) m =
 
 
 let update ?update_params ?update_lookup_params t =
-    let make v = IntVector.(to_ptr (make v)) in
+    let make v = IntVector.(to_ptr (of_array v)) in
     ignore (match update_params, update_lookup_params with
     | Some ps, Some lps -> t -> update ((make ps), (make lps))
     | Some ps, None -> t -> update ((make ps), (make [||]))

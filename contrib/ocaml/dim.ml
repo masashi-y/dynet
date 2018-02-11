@@ -6,7 +6,7 @@ open Vectors
 type t = c_obj
 
 let make ?(batch=1) arr =
-    let v = LongVector.make arr in
+    let v = LongVector.of_array arr in
     let batch = batch to int in
     new_Dim '((LongVector.to_ptr v), batch)
 

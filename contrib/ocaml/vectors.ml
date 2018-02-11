@@ -16,15 +16,15 @@ module type VECTOR =
 sig
     type t
     type value
-    val make : value array -> t
-
     val size : t -> int
+    val of_array : value array -> t
+    val to_array : t -> value array
+    val make : int -> value -> t
     val empty : t -> bool
     val clear : t -> unit
     val push_back : t -> value -> unit
     val get : t -> int -> value
     val set : t -> int -> value -> unit
-    val to_array : t -> value array
     val fold_left : ('a -> value -> 'a) -> 'a -> t -> 'a
     val fold_right : (value -> 'a -> 'a) -> t -> 'a -> 'a
     val map : (value -> 'a) -> t -> 'a list
@@ -40,21 +40,24 @@ struct
     type t = c_obj
     type value = Base.t
 
-    let make arr =
+    let size v = (v -> size ()) as int
+
+    let of_array arr =
         let v = Base.new_vector '() in
         array_to_vector v Base.from_t arr
 
-    let size v = (v -> size ()) as int
-    let empty v = (v -> empty ()) as bool
-    let clear v = ignore (v -> clear ())
-    let push_back v e = ignore (v -> push_back ((Base.from_t e)))
-    let get v i = Base.to_t (v '[i to int])
-    let set v i s = ignore (v -> set ((i to int), (Base.from_t s)))
     let to_array v =
         let arr = Array.make (size v) Base.zero in
         ignore (vector_to_array v Base.to_t arr);
         arr
 
+    let make n x = of_array (Array.make n x)
+
+    let empty v = (v -> empty ()) as bool
+    let clear v = ignore (v -> clear ())
+    let push_back v e = ignore (v -> push_back ((Base.from_t e)))
+    let get v i = Base.to_t (v '[i to int])
+    let set v i s = ignore (v -> set ((i to int), (Base.from_t s)))
     let fold_left f accum v =
         let len = size v in
         let rec aux i accum =
@@ -85,6 +88,7 @@ struct
 
     let to_ptr t = t
     let from_ptr t = t
+
 end
 
 module IntVector
@@ -92,6 +96,18 @@ module IntVector
     struct
         type t = int
         let new_vector = new_IntVector
+        let from_t i = i to int
+        let to_t i = i as int
+        let zero = 0
+        let show = string_of_int
+    end
+)
+
+module UnsignedVector
+    : VECTOR with type value = int = Vector (
+    struct
+        type t = int
+        let new_vector = new_UnsignedVector
         let from_t i = i to int
         let to_t i = i as int
         let zero = 0

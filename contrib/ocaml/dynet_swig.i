@@ -324,10 +324,14 @@ Expression f(const T& xs, const T1& arg1);
 %rename(lookup_vector) lookup(ComputationGraph& g, LookupParameter p, const std::vector<unsigned>& indices);
 %rename(const_lookup_vector) const_lookup(ComputationGraph& g, LookupParameter p, const std::vector<unsigned>& indices);
 
+%rename(input_scalar) input(ComputationGraph& g, real s);
+%rename(input_sparse) input(ComputationGraph& g, const Dim& d, const std::vector<unsigned int>& ids, const std::vector<float>& data, float defdata = 0.f);
+
 Expression input(ComputationGraph& g, real s);
-Expression input(ComputationGraph& g, const real *ps);
+/* Expression input(ComputationGraph& g, const real *ps); */
 Expression input(ComputationGraph& g, const Dim& d, const std::vector<float>* pdata);
 Expression input(ComputationGraph& g, const Dim& d, const std::vector<unsigned int>& ids, const std::vector<float>& data, float defdata = 0.f);
+
 Expression parameter(ComputationGraph& g, Parameter p);
 Expression parameter(ComputationGraph& g, LookupParameter lp);
 Expression const_parameter(ComputationGraph& g, Parameter p);
@@ -353,10 +357,17 @@ Expression random_gumbel(ComputationGraph& g, const Dim& d, real mu = 0.0, real 
 /* ARITHMETIC OPERATIONS */
 
 // Rename operators to valid Java function names
-%rename(exprPlus) operator+;
-%rename(exprTimes) operator*;
-%rename(exprMinus) operator-;
-%rename(exprDivide) operator/;
+%rename(exprNeg) operator-(const Expression& x);
+%rename(exprPlusExEx) operator+(const Expression& x, const Expression& y);
+%rename(exprPlusExRe) operator+(const Expression& x, real y);
+%rename(exprPlusReEx) operator+(real x, const Expression& y);
+%rename(exprMinusExEx) operator-(const Expression& x, const Expression& y);
+%rename(exprMinusReEx) operator-(real x, const Expression& y);
+%rename(exprMinusExRe) operator-(const Expression& x, real y);
+%rename(exprTimesExEx) operator*(const Expression& x, const Expression& y);
+%rename(exprTimesReEx) operator*(const Expression& x, float y);
+%rename(exprTimesExRe) operator*(float y, const Expression& x); // { return x * y; }
+%rename(exprDivide) operator/(const Expression& x, float y); // { return x * (1.f / y); }
 
 Expression operator-(const Expression& x);
 Expression operator+(const Expression& x, const Expression& y);
@@ -535,8 +546,7 @@ Expression maxpooling2d(const Expression& x, const std::vector<unsigned>& ksize,
 
 Expression contract3d_1d(const Expression& x, const Expression& y);
 Expression contract3d_1d_1d(const Expression& x, const Expression& y, const Expression& z);
-Expression contract3d_1d_1d(const Expression& x, const Expression& y, const Expression& z, const
- Expression& b);
+Expression contract3d_1d_1d(const Expression& x, const Expression& y, const Expression& z, const Expression& b);
 Expression contract3d_1d(const Expression& x, const Expression& y, const Expression& b);
 
 /* LINEAR ALGEBRA OPERATIONS */
@@ -589,18 +599,25 @@ struct ComputationGraph {
 
   Dim& get_dimension(VariableIndex index) const;
 
-  const Tensor& forward(const Expression& last);
+  /* const Tensor& forward(const Expression& last); */
 %extend {
-  Tensor forward_one(const Expression& last) {
-      dynet::Tensor& t = (dynet::Tensor&)self->forward(last);
-      return t;
+  const Tensor forward_deref(const Expression& last) {
+      return self->forward(last);
+  }
+
+  const Tensor incremental_forward_deref(const Expression& last) {
+      return self->incremental_forward(last);
+  }
+
+  const Tensor get_value_deref(const Expression& e) {
+      return self->get_value(e);
   }
 };
   //const Tensor& forward(VariableIndex i);
-  const Tensor& incremental_forward(const Expression& last);
+  /* const Tensor& incremental_forward(const Expression& last); */
   //const Tensor& incremental_forward(VariableIndex i);
   //const Tensor& get_value(VariableIndex i);
-  const Tensor& get_value(const Expression& e);
+  /* const Tensor& get_value(const Expression& e); */
   void invalidate();
   void backward(const Expression& last);
   //void backward(VariableIndex i);
@@ -615,8 +632,8 @@ struct ComputationGraph {
 // declarations from dynet/training.h //
 ////////////////////////////////////////
 
-/* // Need to disable constructor as SWIG gets confused otherwise */
-/* %nodefaultctor Trainer; */
+// Need to disable constructor as SWIG gets confused otherwise
+%nodefaultctor Trainer;
 struct Trainer {
   virtual void update();
   //void update(const std::vector<unsigned> & updated_params, const std::vector<unsigned> & updated_lookup_params);
@@ -646,6 +663,10 @@ struct Trainer {
 
   ParameterCollection* model;
 };
+
+%typemap(out) const Tensor& {
+    $result = const_cast<Tensor&>($1);
+}
 
 struct SimpleSGDTrainer : public Trainer {
   explicit SimpleSGDTrainer(ParameterCollection& m, real learning_rate = 0.1);
@@ -694,6 +715,284 @@ struct AmsgradTrainer : public Trainer {
 //  void update() override;
 //  void restart() override;
 //};
+
+///////////////////////////////////
+// declarations from dynet/rnn.h //
+///////////////////////////////////
+
+%nodefaultctor RNNBuilder;
+struct RNNBuilder {
+  RNNPointer state() const;
+  void new_graph(ComputationGraph& cg, bool update = true);
+  void start_new_sequence(const std::vector<Expression>& h_0 = {});
+  Expression set_h(const RNNPointer& prev, const std::vector<Expression>& h_new = {});
+  Expression set_s(const RNNPointer& prev, const std::vector<Expression>& s_new = {});
+  Expression add_input(const Expression& x);
+  Expression add_input(const RNNPointer& prev, const Expression& x);
+  void rewind_one_step();
+  RNNPointer get_head(const RNNPointer& p);
+  void set_dropout(float d);
+  void disable_dropout();
+
+  virtual Expression back() const;
+  virtual std::vector<Expression> final_h() const = 0;
+  virtual std::vector<Expression> get_h(RNNPointer i) const = 0;
+
+  virtual std::vector<Expression> final_s() const = 0;
+  virtual std::vector<Expression> get_s(RNNPointer i) const = 0;
+
+  virtual unsigned num_h0_components() const = 0;
+  virtual void copy(const RNNBuilder& params) = 0;
+
+  virtual ParameterCollection & get_parameter_collection() = 0;
+};
+
+struct SimpleRNNBuilder : public RNNBuilder {
+  SimpleRNNBuilder() = default;
+
+  explicit SimpleRNNBuilder(unsigned layers,
+                            unsigned input_dim,
+                            unsigned hidden_dim,
+                            ParameterCollection& model,
+                            bool support_lags = false);
+
+  Expression add_auxiliary_input(const Expression& x, const Expression& aux);
+
+  Expression back() const override;
+  std::vector<Expression> final_h() const override;
+  std::vector<Expression> final_s() const override;
+
+  std::vector<Expression> get_h(RNNPointer i) const override;
+  std::vector<Expression> get_s(RNNPointer i) const override;
+  void copy(const RNNBuilder& params) override;
+
+  unsigned num_h0_components() const override;
+
+  ParameterCollection & get_parameter_collection() override;
+};
+
+////////////////////////////////////
+// declarations from dynet/lstm.h //
+////////////////////////////////////
+
+struct CoupledLSTMBuilder : public RNNBuilder {
+  CoupledLSTMBuilder() = default;
+  explicit CoupledLSTMBuilder(unsigned layers,
+                       unsigned input_dim,
+                       unsigned hidden_dim,
+                       ParameterCollection& model);
+  Expression back() const override;
+  std::vector<Expression> final_h() const override;
+  std::vector<Expression> final_s() const override;
+  unsigned num_h0_components() const override;
+
+  std::vector<Expression> get_h(RNNPointer i) const override;
+  std::vector<Expression> get_s(RNNPointer i) const override;
+
+  void copy(const RNNBuilder& params) override;
+
+  void set_dropout(float d);
+  void set_dropout(float d, float d_h, float d_c);
+  void disable_dropout();
+  void set_dropout_masks(unsigned batch_size = 1);
+
+  ParameterCollection & get_parameter_collection() override;
+
+  ParameterCollection local_model;
+
+  // first index is layer, then ...
+  std::vector<std::vector<Parameter>> params;
+
+  // first index is layer, then ...
+  std::vector<std::vector<Expression>> param_vars;
+
+  // first index is layer, then ...
+  // masks for Gal dropout
+  std::vector<std::vector<Expression>> masks;
+
+  // first index is time, second is layer
+  std::vector<std::vector<Expression>> h, c;
+
+  // initial values of h and c at each layer
+  // - both default to zero matrix input
+  bool has_initial_state; // if this is false, treat h0 and c0 as 0
+  std::vector<Expression> h0;
+  std::vector<Expression> c0;
+  unsigned layers;
+  unsigned input_dim = 0;
+  unsigned hid = 0;
+  bool dropout_masks_valid;
+
+  float dropout_rate_h = 0.f, dropout_rate_c = 0.f;
+};
+
+struct VanillaLSTMBuilder : public RNNBuilder {
+  VanillaLSTMBuilder() = default;
+  explicit VanillaLSTMBuilder(unsigned layers,
+                       unsigned input_dim,
+                       unsigned hidden_dim,
+                       ParameterCollection& model,
+                       bool ln_lstm = false,
+                       float forget_bias = 1.f);
+
+  Expression back() const override;
+  std::vector<Expression> final_h() const override;
+  std::vector<Expression> final_s() const override;
+  unsigned num_h0_components() const override;
+
+  std::vector<Expression> get_h(RNNPointer i) const override;
+  std::vector<Expression> get_s(RNNPointer i) const override;
+
+  void copy(const RNNBuilder & params) override;
+
+  void set_dropout(float d);
+  void set_dropout(float d, float d_r);
+  void disable_dropout();
+  void set_dropout_masks(unsigned batch_size = 1);
+
+  ParameterCollection & get_parameter_collection() override;
+
+  ParameterCollection local_model;
+
+  // first index is layer, then ...
+  std::vector<std::vector<Parameter>> params;
+  // first index is layer, then ...
+  std::vector<std::vector<Parameter>> ln_params;
+
+  // first index is layer, then ...
+  std::vector<std::vector<Expression>> param_vars;
+  // first index is layer, then ...
+  std::vector<std::vector<Expression>> ln_param_vars;
+
+  // first index is layer, then ...
+  std::vector<std::vector<Expression>> masks;
+
+  // first index is time, second is layer
+  std::vector<std::vector<Expression>> h, c;
+
+  // initial values of h and c at each layer
+  // - both default to zero matrix input
+  bool has_initial_state; // if this is false, treat h0 and c0 as 0
+  std::vector<Expression> h0;
+  std::vector<Expression> c0;
+  unsigned layers;
+  unsigned input_dim, hid;
+  float dropout_rate_h;
+  bool ln_lstm;
+  float forget_bias;
+  bool dropout_masks_valid;
+};
+
+typedef VanillaLSTMBuilder LSTMBuilder;
+
+struct CompactVanillaLSTMBuilder : public RNNBuilder {
+  CompactVanillaLSTMBuilder();
+  explicit CompactVanillaLSTMBuilder(unsigned layers,
+                              unsigned input_dim,
+                              unsigned hidden_dim,
+                              ParameterCollection& model);
+
+  Expression back() const override;
+  std::vector<Expression> final_h() const override;
+  std::vector<Expression> final_s() const override;
+  unsigned num_h0_components() const override;
+
+  std::vector<Expression> get_h(RNNPointer i) const override;
+  std::vector<Expression> get_s(RNNPointer i) const override;
+
+  void copy(const RNNBuilder & params) override;
+
+  void set_dropout(float d);
+  void set_dropout(float d, float d_r);
+  void disable_dropout();
+  void set_dropout_masks(unsigned batch_size = 1);
+  void set_weightnoise(float std);
+
+  ParameterCollection & get_parameter_collection() override;
+
+  ParameterCollection local_model;
+
+  // first index is layer, then ...
+  std::vector<std::vector<Parameter>> params;
+
+  // first index is layer, then ...
+  std::vector<std::vector<Expression>> param_vars;
+
+  // first index is layer, then ...
+  std::vector<std::vector<Expression>> masks;
+
+  // first index is time, second is layer
+  std::vector<std::vector<Expression>> h, c;
+
+  // initial values of h and c at each layer
+  // - both default to zero matrix input
+  bool has_initial_state; // if this is false, treat h0 and c0 as 0
+  std::vector<Expression> h0;
+  std::vector<Expression> c0;
+  unsigned layers;
+  unsigned input_dim, hid;
+  float dropout_rate_h;
+  float weightnoise_std;
+  bool dropout_masks_valid;
+};
+
+///////////////////////////////////
+// declarations from dynet/gru.h //
+///////////////////////////////////
+
+struct GRUBuilder : public RNNBuilder {
+  GRUBuilder() = default;
+  explicit GRUBuilder(unsigned layers,
+                      unsigned input_dim,
+                      unsigned hidden_dim,
+                      ParameterCollection& model);
+  Expression back() const override;
+  std::vector<Expression> final_h() const override;
+  std::vector<Expression> final_s() const override;
+  std::vector<Expression> get_h(RNNPointer i) const override;
+  std::vector<Expression> get_s(RNNPointer i) const override;
+  unsigned num_h0_components() const override;
+  void copy(const RNNBuilder & params) override;
+  ParameterCollection & get_parameter_collection() override;
+};
+
+
+/////////////////////////////////////////
+// declarations from dynet/fast-lstm.h //
+/////////////////////////////////////////
+
+struct FastLSTMBuilder : public RNNBuilder {
+  FastLSTMBuilder() = default;
+  explicit FastLSTMBuilder(unsigned layers,
+                           unsigned input_dim,
+                           unsigned hidden_dim,
+                           ParameterCollection& model);
+
+  Expression back() const override;
+  std::vector<Expression> final_h() const override;
+  std::vector<Expression> final_s() const override;
+  unsigned num_h0_components() const override;
+
+  std::vector<Expression> get_h(RNNPointer i) const override;
+  std::vector<Expression> get_s(RNNPointer i) const override;
+
+  void copy(const RNNBuilder & params) override;
+
+  ParameterCollection & get_parameter_collection() override;
+
+  ParameterCollection local_model;
+
+  std::vector<std::vector<Parameter>> params;
+  std::vector<std::vector<Expression>> param_vars;
+
+  std::vector<std::vector<Expression>> h, c;
+
+  bool has_initial_state; // if this is false, treat h0 and c0 as 0
+  std::vector<Expression> h0;
+  std::vector<Expression> c0;
+  unsigned layers;
+};
+
 
 ////////////////////////////////////
 // declarations from dynet/init.h //

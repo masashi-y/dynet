@@ -21,3 +21,5 @@ module Expr = Expr
 module ExpressionVector = ExpressionVector
 module Tensor = Tensor
 module Trainer = Trainer
+
+let ( !@ ) = Dim.make
