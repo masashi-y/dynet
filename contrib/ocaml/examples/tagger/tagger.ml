@@ -100,7 +100,8 @@ let make_vocab xs ys =
 
 let descr =
     format_of_string
-"Parameters:
+"train size: %i
+dev size: %i
 vocab size\t: %i
 label size\t: %i
 num layers\t: %i
@@ -129,19 +130,20 @@ let () =
     let tagger = make m vocab labels
          ~layers ~wembed_dim ~hidden_dim ~mlp_dim in
 
-    Printf.printf descr (Dict.length vocab) (Dict.length labels)
-        layers wembed_dim hidden_dim mlp_dim;
+    Printf.printf descr (List.length train_xs) (List.length dev_xs)
+            (Dict.length vocab) (Dict.length labels) layers wembed_dim hidden_dim mlp_dim;
 
     let batch_xs = Utils.make_batch 500 train_xs in
     let batch_ys = Utils.make_batch 500 train_ys in
+    let batches = List.combine batch_xs batch_ys in
     let eval_epoch = min 10 (List.length batch_xs) in
 
-    for i = 1 to iteration do
-        List.iter2 (fun xs ys ->
+    for _ = 1 to iteration do
+        List.iteri (fun i (xs, ys) ->
             let loss = train trainer tagger xs ys in
             Trainer.status trainer;
             Printf.printf "loss = %f\n%!" loss;
-            if i mod eval_epoch = 0 then begin
+            if i + 1 mod eval_epoch = 0 then begin
                 let preds = List.map (tag tagger) dev_xs in
                 let index = Random.int (List.length preds) in
                 Printf.printf "accuracy: %f\n\nin: %s\ngold: %s\npred: %s\n%!"
@@ -150,5 +152,5 @@ let () =
                 (String.concat " " @@ List.nth dev_ys index)
                 (String.concat " " @@ List.nth preds index)
             end
-        ) batch_xs batch_ys
+        ) batches
     done

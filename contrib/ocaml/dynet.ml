@@ -26,6 +26,10 @@ module Dict = Dict
 
 let ( !@ ) = Dim.make
 
+let print_dim d = print_endline (Dim.show d)
+
+let print_tensor t = print_endline (Tensor.show t)
+
 let argmax v =
     let arr = FloatVector.to_array v in
     if Array.length arr <= 0 then

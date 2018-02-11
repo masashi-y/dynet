@@ -32,6 +32,7 @@ sig
     val map : (value -> 'a) -> t -> 'a list
     val iter : (value -> unit) -> t -> unit
     val show : t -> string
+    val print : t -> unit
     val to_ptr : t -> c_obj
     val from_ptr : c_obj -> t
 end

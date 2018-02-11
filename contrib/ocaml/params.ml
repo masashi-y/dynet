@@ -53,7 +53,7 @@ module ParameterInit =
 struct
     type t = c_obj
 
-    let normal ?(m=0.0) ?(v=1.0) =
+    let normal ?(m=0.0) ?(v=1.0) () =
         new_ParameterInitNormal '((m to float), (v to float))
     let uniform scale =
         new_ParameterInitUniform '((scale to float))

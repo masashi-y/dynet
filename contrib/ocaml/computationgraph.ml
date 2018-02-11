@@ -8,7 +8,7 @@ type t = c_obj
 let _with f =
     let cg = new_ComputationGraph '() in
     let res = f cg in
-    '~ cg; res
+    ignore ('~ cg); res
 
 let add_parameters cg p =
     (cg -> add_parameters ((Parameter.to_ptr p))) as int

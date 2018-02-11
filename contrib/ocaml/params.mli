@@ -40,7 +40,7 @@ module ParameterInit :
 sig
     type t
 
-    val normal : ?m:float -> ?v:float -> t
+    val normal : ?m:float -> ?v:float -> unit -> t
     val uniform : float -> t
     val const : float -> t
     val identity : unit -> t
