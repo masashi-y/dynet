@@ -1,0 +1,7 @@
+
+(executable (
+    (name xor)
+    (libraries (dynet))
+    (flags (-ccopt -lstdc++))
+))
+

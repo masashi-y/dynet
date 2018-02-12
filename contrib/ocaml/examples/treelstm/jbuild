@@ -1,0 +1,7 @@
+
+(executable (
+    (name treelstm)
+    (libraries (dynet utils str))
+    (flags (-ccopt -lstdc++))
+))
+

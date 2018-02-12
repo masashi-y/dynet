@@ -57,6 +57,8 @@ let random_bernoulli ?(scale=1.0) cg dim p = E.from_ptr (_random_bernoulli '((Co
 let random_uniform cg dim left right = E.from_ptr (_random_uniform '((Computationgraph.to_ptr cg), (Dim.to_ptr dim), (left to float), (right to float)))
 let random_gumbel ?(mu=0.0) ?(beta=1.0) cg dim = E.from_ptr (_random_gumbel '((Computationgraph.to_ptr cg), (Dim.to_ptr dim), (mu to float), (beta to float)))
 
+let affine_transform xs = E.from_ptr (_affine_transform '((ExpressionVector.(to_ptr (of_array xs)))))
+
 let sum xs = E.from_ptr (_sum '((ExpressionVector.(to_ptr (of_array xs)))))
 let sum_elems x = E.from_ptr (_sum_elems '((E.to_ptr x)))
 let moment_elems x r = E.from_ptr (_moment_elems '((E.to_ptr x), (r to uint)))
@@ -200,7 +202,7 @@ let ( $* ) = scalar_mul
 let ( /$ ) = div_scalar
 let ( *@ ) = dot_product
 let ( ** ) = pow
-(* let ( *. ) = cmult *)
+let ( *. ) = cmult
 (* let ( /. ) = cdiv *)
 (* let ( $/ ) = scalar_div *)
 

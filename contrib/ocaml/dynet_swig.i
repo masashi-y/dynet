@@ -628,6 +628,7 @@ struct ComputationGraph {
   std::vector<VariableIndex> parameter_nodes;
 };
 
+
 ////////////////////////////////////////
 // declarations from dynet/training.h //
 ////////////////////////////////////////
@@ -1036,4 +1037,17 @@ std::string tensor_show(dynet::Tensor& d) {
 }
 %}
 std::string tensor_show(dynet::Tensor& d);
+
+%{
+dynet::ComputationGraph* make_ComputationGraph () {
+    return new dynet::ComputationGraph ();
+}
+
+dynet::ParameterCollection* make_ParameterCollection () {
+    return new dynet::ParameterCollection ();
+}
+%}
+
+dynet::ComputationGraph* make_ComputationGraph ();
+dynet::ParameterCollection* make_ParameterCollection ();
 

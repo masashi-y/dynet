@@ -4,11 +4,6 @@
 open Swig
 open Dynet_swig
 
-let () =
-    let d = Dim.make ~batch:5 [|2; 3|] in
-    Printf.printf "%s\n" (Dim.show d);
-    Printf.printf "%d\n" (Dim.get d 1)
-
 let cleanup () = ignore (_cleanup '())
 
 let initialize argv = 

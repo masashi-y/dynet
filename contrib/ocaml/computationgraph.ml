@@ -6,7 +6,7 @@ open Dynet_swig
 type t = c_obj
 
 let _with f =
-    let cg = new_ComputationGraph '() in
+    let cg = _make_ComputationGraph '() in
     let res = f cg in
     ignore ('~ cg); res
 
@@ -17,10 +17,10 @@ let add_const_parameters cg p =
     (cg -> add_const_parameters ((Parameter.to_ptr p))) as int
 
 let add_lookup cg p i =
-    (cg -> add_lookup ((Parameter.to_ptr p), (i to int))) as int
+    (cg -> add_lookup ((Parameter.to_ptr p), (i to uint))) as int
 
 let add_const_lookup cg p i =
-    (cg -> add_const_lookup ((Parameter.to_ptr p), (i to int))) as int
+    (cg -> add_const_lookup ((Parameter.to_ptr p), (i to uint))) as int
 
 let clear cg = ignore (cg -> clear ())
 let checkpoint cg = ignore (cg -> checkpoint ())

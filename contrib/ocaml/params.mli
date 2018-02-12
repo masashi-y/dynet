@@ -66,6 +66,12 @@ sig
     val add_parameters : ?init:ParameterInit.t -> ?scale:float -> t -> Dim.t -> Parameter.t
     val add_lookup_parameters : ?init:ParameterInit.t -> t -> int -> Dim.t -> LookupParameter.t
 
+    val project_weights : ?radius:float -> t -> unit
+    val set_weight_decay_lambda : t -> float -> unit
+
+    val parameter_count : t -> int
+    val updated_parameter_count : t -> int
+
     val to_ptr : t -> c_obj
     val from_ptr : c_obj -> t
 end

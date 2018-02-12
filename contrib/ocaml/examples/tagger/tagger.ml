@@ -62,7 +62,7 @@ let train trainer tagger xs ys =
             Trainer.update trainer;
             (loss, float_of_int (List.length x))) in
     let (losses, lengths) = List.split (List.map2 f xs ys) in
-    Utils.sum losses /. Utils.sum lengths
+    Utils.(sum losses /. sum lengths)
 
 
 let tag tagger xs =

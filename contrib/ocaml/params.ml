@@ -131,8 +131,7 @@ module ParameterCollection =
 struct
     type t = c_obj
 
-    let make () = new_ParameterCollection '()
-
+    let make () = _make_ParameterCollection '()
 
     let gradient_l2_norm p = (p -> gradient_l2_norm ()) as float
     let reset_gradient p = ignore (p -> reset_gradient ())
@@ -153,27 +152,12 @@ struct
         | None -> p -> add_lookup_parameters ((n to uint), dim)
         | Some init -> p -> add_lookup_parameters ((n to uint), dim, init)
 
+    let project_weights ?(radius=1.0) p = ignore (p -> project_weights ((radius to float)))
+    let set_weight_decay_lambda p lambda = ignore (p -> set_weight_decay_lambda ((lambda to float)))
+
+    let parameter_count p = (p -> parameter_count ()) as int
+    let updated_parameter_count p = (p -> updated_parameter_count ()) as int
+
     let to_ptr t = t
     let from_ptr t = t
 end
-(*
-class ParameterCollection {
- public:
-  ParameterCollection();
-  ~ParameterCollection();
-  float gradient_l2_norm() const;
-  void reset_gradient();
-
-  Parameter add_parameters(const Dim& d, float scale = 0.0f);
-  Parameter add_parameters(const Dim& d, const ParameterInit & init);
-  LookupParameter add_lookup_parameters(unsigned n, const Dim& d);
-  LookupParameter add_lookup_parameters(unsigned n, const Dim& d, const ParameterInit & init);
-
-  void project_weights(float radius = 1.0f);
-  void set_weight_decay_lambda(float lambda);
-
-  size_t parameter_count() const;
-  size_t updated_parameter_count() const;
-};
-*)
-
