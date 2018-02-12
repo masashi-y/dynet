@@ -110,12 +110,13 @@ let train trainer pW lstm xs yss =
         let _W = Expr.parameter cg pW in
         let y_preds = Tree.nonterms (expr_for_tree cg lstm x) in
         let losses = List.map2 Expr.(fun y (h, _) ->
-            let expr = pickneglogsoftmax (_W * h) y in
-            let loss = Tensor.as_scalar (Cg.forward cg expr) in
-            Cg.backward cg expr;
-            Trainer.update trainer;
-            loss) ys y_preds in
-        (Utils.sum losses, float_of_int @@ List.length ys)) in
+            pickneglogsoftmax (_W * h) y
+            ) ys y_preds in
+        let loss_expr = Expr.sum (Array.of_list losses) in
+        let loss = Tensor.as_scalar (Cg.forward cg loss_expr) in
+        Cg.backward cg loss_expr;
+        Trainer.update trainer;
+        (loss, float_of_int @@ List.length ys)) in
     let (losses, lengths) = List.split (List.map2 f xs yss) in
     Utils.(sum losses /. sum lengths)
 
