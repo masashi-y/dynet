@@ -1,28 +1,54 @@
 
 open Params
+
 open Vectors
 
+open Io
+
 module IntVector = IntVector
+
 module LongVector = LongVector
+
 module FloatVector = FloatVector
+
 module DoubleVector = DoubleVector
+
 module StringVector = StringVector
-(* module ExpressionVector : VECTOR with type value = Expr.t *)
-(* module ParameterVector : VECTOR with type value = Parameter.t *)
+
+module ParameterVector = ParameterVector
+
+module ExpressionVector = ExpressionVector
 
 module Init = Init
+
 module Model = ParameterCollection
+
 module Parameter = Parameter
+
 module LookupParameter = LookupParameter
-module ParameterVector = ParameterVector
+
+module ParameterInit = ParameterInit
+
 module Computationgraph = Computationgraph
+
 module Dim = Dim
+
+module Expression = Expression
+
 module Expr = Expr
-module ExpressionVector = ExpressionVector
+
 module Tensor = Tensor
+
 module Trainer = Trainer
+
 module RNN = Rnn
+
 module Dict = Dict
+
+module Saver = Saver
+
+module Loader = Loader
+
 
 let ( !@ ) = Dim.make
 

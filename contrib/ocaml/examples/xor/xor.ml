@@ -14,6 +14,9 @@ let () =
     and pb = Model.add_parameters m (!@[|hidden_size|])
     and pV = Model.add_parameters m (!@[|1; hidden_size|])
     and pa = Model.add_parameters m (!@[|1|]) in
+    (match (Array.to_list argv) with
+        | fname :: _ -> Loader.(populate_model (textfile fname) m)
+        | _ -> ());
     let x_values = FloatVector.make 2 0.0 in
     let y_values = FloatVector.make 1 0.0 in
     Cg._with Expr.(fun cg ->
@@ -40,5 +43,7 @@ let () =
                 Trainer.update sgd;
                 prev_loss +. loss) in
             Printf.printf "E = %f\n" (loss /. 4.0)
-        done)
+        done);
+        let saver = Saver.textfile "/tmp/xor.model" in
+        Saver.save_model saver m
 

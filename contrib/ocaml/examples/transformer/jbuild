@@ -1,0 +1,7 @@
+
+(library (
+    (name transformer)
+    (libraries (dynet utils))
+    (flags (-ccopt -lstdc++))
+))
+

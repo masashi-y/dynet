@@ -68,6 +68,9 @@ struct
     let from_vector v =
         new_ParameterInitFromVector (FloatVector.to_ptr v)
 
+    let lecun_uniform ?(scale=1.0) fan_in =
+        new_ParameterInitLeCunUniform '((fan_in to float), (scale to float))
+
     let initialize_params p t = ignore (p -> initialize_params (t))
 
     let to_ptr t = t

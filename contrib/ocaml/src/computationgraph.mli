@@ -4,6 +4,8 @@ open Params
 
 type t
 
+val kill : unit -> unit
+val reset_cg : unit -> t
 val _with : (t -> 'a) -> 'a
 
 val add_parameters : t -> Parameter.t -> int

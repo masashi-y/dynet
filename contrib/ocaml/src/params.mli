@@ -47,6 +47,7 @@ sig
     val glorot : ?is_lookup:bool -> unit -> t
     val from_file : string -> t
     val from_vector : FloatVector.t -> t
+    val lecun_uniform : ?scale:float -> float -> t
 
     val initialize_params : t -> Tensor.t -> unit
 

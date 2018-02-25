@@ -21,5 +21,9 @@ val transpose : t -> t
 
 val show : t -> string
 
+val to_pair : t -> int list * int
+val to_pair_mat : t -> (int * int) * int
+val to_pair_vec : t -> int * int
+
 val to_ptr : t -> c_obj
 val from_ptr : c_obj -> t

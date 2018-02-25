@@ -161,6 +161,32 @@ private:
   bool lookup;
 };
 
+%{
+namespace dynet {
+struct ParameterInitLeCunUniform : public ParameterInit {
+    ParameterInitLeCunUniform(float fan_in, float scale=1.f) 
+        : fan_in(fan_in), scale(scale) { 
+        if (scale == 0.0f) throw std::domain_error("Scale of the Le Cun uniform distribution cannot be 0 in ParameterInitLeCunUniform"); 
+    }
+
+    virtual void initialize_params(Tensor & values) const override;
+
+private:
+    float fan_in, scale;
+};
+
+void ParameterInitLeCunUniform::initialize_params(Tensor & values) const {
+    float s = scale * std::sqrt(3.f / fan_in);
+    TensorTools::randomize_uniform(values, -s, s);
+}
+}
+%}
+
+struct ParameterInitLeCunUniform : public ParameterInit {
+  ParameterInitLeCunUniform(float fan_in, float scale=1.f);
+  virtual void initialize_params(Tensor & values) const override;
+};
+
 /* I AM NOT ACTUALLY IMPLEMENTED IN THE DYNET CODE
 struct ParameterInitSaxe : public ParameterInit {
   ParameterInitSaxe() {}
@@ -301,6 +327,17 @@ struct Expression {
   Expression(ComputationGraph *pg, VariableIndex i) : pg(pg), i(i) { };
   const Tensor& value();
   const Dim& dim() const { return pg->get_dimension(i); }
+
+%extend {
+  Tensor value_deref() {
+      return const_cast<dynet::Tensor&>(self->value());
+  }
+
+  Dim dim_deref() {
+      return const_cast<dynet::Dim&>(self->dim());
+  }
+};
+
 };
 
 // These templates get used to instantiate operations on vector<Expression>
@@ -365,8 +402,8 @@ Expression random_gumbel(ComputationGraph& g, const Dim& d, real mu = 0.0, real 
 %rename(exprMinusReEx) operator-(real x, const Expression& y);
 %rename(exprMinusExRe) operator-(const Expression& x, real y);
 %rename(exprTimesExEx) operator*(const Expression& x, const Expression& y);
-%rename(exprTimesReEx) operator*(const Expression& x, float y);
-%rename(exprTimesExRe) operator*(float y, const Expression& x); // { return x * y; }
+%rename(exprTimesExRe) operator*(const Expression& x, float y);
+%rename(exprTimesReEx) operator*(float y, const Expression& x); // { return x * y; }
 %rename(exprDivide) operator/(const Expression& x, float y); // { return x * (1.f / y); }
 
 Expression operator-(const Expression& x);
@@ -454,7 +491,7 @@ Expression logsumexp_dim(const Expression& x, unsigned d);
 
 Expression pickneglogsoftmax(const Expression& x, unsigned v);
 /* Expression pickneglogsoftmax(const Expression& x, const unsigned* pv); */
-/* Expression pickneglogsoftmax(const Expression& x, const std::vector<unsigned>& v); */
+Expression pickneglogsoftmax(const Expression& x, const std::vector<unsigned>& v);
 
 Expression hinge(const Expression& x, unsigned index, float m = 1.0);
 Expression hinge(const Expression& x, unsigned* pindex, float m = 1.0);
@@ -489,7 +526,7 @@ Expression select_cols(const Expression& x, const std::vector<unsigned> &cols);
 
 Expression pick(const Expression& x, unsigned v, unsigned d = 0);
 Expression pick(const Expression& x, const std::vector<unsigned>& v, unsigned d = 0);
-Expression pick(const Expression& x, const unsigned* v, unsigned d = 0);
+/* Expression pick(const Expression& x, const unsigned* v, unsigned d = 0); */
 Expression pick_range(const Expression& x, unsigned s, unsigned e, unsigned d = 0);
 Expression pick_batch_elem(const Expression& x, unsigned v);
 Expression pick_batch_elems(const Expression& x, const std::vector<unsigned> & v);
@@ -601,16 +638,16 @@ struct ComputationGraph {
 
   /* const Tensor& forward(const Expression& last); */
 %extend {
-  const Tensor forward_deref(const Expression& last) {
-      return self->forward(last);
+  Tensor forward_deref(const Expression& last) {
+      return const_cast<dynet::Tensor&>(self->forward(last));
   }
 
-  const Tensor incremental_forward_deref(const Expression& last) {
-      return self->incremental_forward(last);
+  Tensor incremental_forward_deref(const Expression& last) {
+      return const_cast<dynet::Tensor&>(self->incremental_forward(last));
   }
 
-  const Tensor get_value_deref(const Expression& e) {
-      return self->get_value(e);
+  Tensor get_value_deref(const Expression& e) {
+      return const_cast<dynet::Tensor&>(self->get_value(e));
   }
 };
   //const Tensor& forward(VariableIndex i);
@@ -1017,6 +1054,52 @@ struct DynetParams {
 void initialize(DynetParams& params);
 void initialize(int& argc, char**& argv, bool shared_parameters = false);
 void cleanup();
+
+//////////////////////////
+// serialization logic  //
+//////////////////////////
+
+/* class Saver {                                                                                          */
+/*  public:                                                                                               */
+/*   Saver();                                                                                             */
+/*   virtual ~Saver();                                                                                    */
+/*   virtual void save(const ParameterCollection & model,                                                 */
+/*                     const std::string & key = "") = 0;                                                 */
+/*   virtual void save(const Parameter & param, const std::string & key = "") = 0;                        */
+/*   virtual void save(const LookupParameter & param, const std::string & key = "") = 0;                  */
+/* }; // class Saver                                                                                      */
+
+/* class Loader {                                                                                         */
+/*  public:                                                                                               */
+/*   Loader();                                                                                            */
+/*   virtual ~Loader();                                                                                   */
+/*   virtual void populate(ParameterCollection & model, const std::string & key = "") = 0;                */
+/*   virtual void populate(Parameter & param, const std::string & key = "") = 0;                          */
+/*   virtual void populate(LookupParameter & lookup_param, const std::string & key = "") = 0;             */
+/*   virtual Parameter load_param(ParameterCollection & model, const std::string & key) = 0;              */
+/*   virtual LookupParameter load_lookup_param(ParameterCollection & model, const std::string & key) = 0; */
+/* }; // class Loader                                                                                     */
+
+
+class TextFileSaver : public Saver {
+ public:
+  TextFileSaver(const std::string & filename, bool append = false);
+  virtual ~TextFileSaver();
+  void save(const ParameterCollection & model, const std::string & key = "") override;
+  void save(const Parameter & param, const std::string & key = "") override;
+  void save(const LookupParameter & param, const std::string & key = "") override;
+}; // class TextFileSaver
+
+class TextFileLoader : public Loader {
+ public:
+  TextFileLoader(const std::string & filename);
+  virtual ~TextFileLoader();
+  void populate(ParameterCollection & model, const std::string & key = "") override;
+  void populate(Parameter & param, const std::string & key = "") override;
+  void populate(LookupParameter & lookup_param, const std::string & key = "") override;
+  Parameter load_param(ParameterCollection & model, const std::string & key) override;
+  LookupParameter load_lookup_param(ParameterCollection & model, const std::string & key) override;
+}; // class TextFileLoader
 
 }
 

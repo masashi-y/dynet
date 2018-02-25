@@ -19,6 +19,7 @@ sig
     val size : t -> int
     val of_array : value array -> t
     val to_array : t -> value array
+    val init : int -> (int -> value) -> t
     val of_list : value list -> t
     val to_list : t -> value list
     val make : int -> value -> t

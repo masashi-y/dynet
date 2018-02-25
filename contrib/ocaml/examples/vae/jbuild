@@ -1,0 +1,7 @@
+
+(executable (
+    (name rnnlm_aevb)
+    (libraries (dynet utils))
+    (flags (-ccopt -lstdc++))
+))
+

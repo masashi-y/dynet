@@ -5,10 +5,24 @@ open Dynet_swig
 
 type t = c_obj
 
+let cg = ref None
+
+let kill () = match !cg with
+    | None -> ()
+    | Some cg' ->
+        ignore('~ cg');
+        cg := None
+
+let rec reset_cg () = match !cg with
+    | Some cg' -> kill (); reset_cg ()
+    | None -> let new_cg = _make_ComputationGraph '() in
+              cg := Some new_cg; new_cg
+
 let _with f =
-    let cg = _make_ComputationGraph '() in
+    let cg = reset_cg () in
     let res = f cg in
-    ignore ('~ cg); res
+    kill ();
+    res
 
 let add_parameters cg p =
     (cg -> add_parameters ((Parameter.to_ptr p))) as int

@@ -19,6 +19,7 @@ sig
     val size : t -> int
     val of_array : value array -> t
     val to_array : t -> value array
+    val init : int -> (int -> value) -> t
     val of_list : value list -> t
     val to_list : t -> value list
     val make : int -> value -> t
@@ -53,6 +54,8 @@ struct
         let arr = Array.make (size v) Base.zero in
         ignore (vector_to_array v Base.to_t arr);
         arr
+
+    let init n f = of_array (Array.init n f)
 
     let of_list lst =
         of_array (Array.of_list lst)

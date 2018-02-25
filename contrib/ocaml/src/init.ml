@@ -1,6 +1,4 @@
 
-(* This example was mostly lifted from the guile example directory *)
-
 open Swig
 open Dynet_swig
 
@@ -22,7 +20,7 @@ let initialize argv =
          ("-requested-gpus",    Arg.Int    (fun v -> ignore (ps -> "[requested_gpus]" ((v to int)))),    "");
          (* std::vector<int> gpu_mask; /**< List of required GPUs by ids */ *)
          ("--", Arg.Rest (fun v -> rest := v :: !rest), "") ] in
-    Arg.parse spec (fun v -> rest := v :: !rest) "";
+    Arg.parse_argv argv spec (fun v -> rest := v :: !rest) "";
     ignore (_initialize ps);
-    List.rev @@ !rest
+    Array.of_list (List.rev @@ !rest)
 

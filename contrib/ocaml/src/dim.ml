@@ -5,6 +5,23 @@ open Vectors
 
 type t = c_obj
 
+module List =
+struct
+    include List
+
+    let rec initial = function
+        | [] -> raise (Invalid_argument "init")
+        | [x] -> []
+        | x :: xs -> x :: initial xs
+
+    let init n ~f =
+        if n < 0 then raise (Invalid_argument "init");
+        let rec aux i accum =
+            if i = 0 then accum
+            else aux (i-1) (f (i-1) :: accum) in
+        aux n []
+end
+
 let make ?(batch=1) arr =
     let v = LongVector.of_array arr in
     let batch = batch to uint in
@@ -27,6 +44,20 @@ let get d i = ((d '[i to uint]) as int)
 let transpose d = (d -> transpose ())
 
 let show d = ((_dim_show d) as string)
+
+let to_pair d =
+    let lst = List.init (ndims d) (get d) in
+    let b = batch_elems d in
+    (lst, b)
+
+let to_pair_mat d = match to_pair d with
+    | [n; m], b -> ((n, m), b)
+    | _ -> raise (Invalid_argument "to_pair_mat")
+
+let to_pair_vec d = match to_pair d with
+    | [n], b -> (n, b)
+    | _ -> raise (Invalid_argument "to_pair_vec")
+
 (*
 
 "size"
