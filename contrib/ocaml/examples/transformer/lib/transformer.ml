@@ -109,8 +109,9 @@ let split_rows x h =
     ExpressionVector.init h (fun i ->
         Expr.pick_range x (i * steps) ((i+1) * steps))
 
-let dropout0 use rate x =
-    if use && rate > 0.0 then
+let dropout0 rate x =
+    let cfg = Config.global () in
+    if cfg.use_dropout && rate > 0.0 then
         Expr.dropout_dim x 1 rate else x
 
 
@@ -184,7 +185,7 @@ struct
     }
 
     let apply {l_in; l_out; cfg} cg x =
-        let dropout = dropout0 cfg.use_dropout cfg.ff_dropout_rate in
+        let dropout = dropout0 cfg.ff_dropout_rate in
         let activation = match cfg.ffl_activation with
             | ReLU -> Expr.rectify
             | Swish -> Expr.silu ~beta:1.0 in
@@ -272,7 +273,7 @@ struct
         let linear ln x =
             let x = LinearLayer.apply ln cg x in
             concatenate_to_batch_vec (split_rows x cfg.nheads) in
-        let dropout = dropout0 cfg.use_dropout cfg.attention_dropout_rate in
+        let dropout = dropout0 cfg.attention_dropout_rate in
         let blinding x = match blinding with
             | Some bl -> x + bl | None -> x in
         let reconst x = concatenate_vec (split_batch x cfg.nheads) in
@@ -321,7 +322,7 @@ struct
     }
 
     let apply ({cfg} as encl) cg src mask = Expr.(
-        let dropout = dropout0 cfg.use_dropout cfg.encoder_sublayer_dropout_rate in
+        let dropout = dropout0 cfg.encoder_sublayer_dropout_rate in
         MultiHeadAttentionLayer.apply encl.self_attention cg src src mask
           |> dropout |> (+) src |> LayerNorm.apply encl.ln1 cg
              |> fun ln -> FeedForwardLayer.apply encl.feed_forward cg ln |> (+) ln (* residual *)
@@ -354,12 +355,11 @@ struct
     }
 
     let compute_embeddings_and_masks ({cfg} as encoder) cg xss (* sentences *) =
-        let unk_id = 9 in
         let max_len = List.maximum_by List.length xss in
         let embed xs = Expr.lookup_batch cg encoder.embed_s (Array.of_list xs) in
         let pad_and_mask xs (xss, masks) =
             let ms = Array.of_list (mask max_len xs) in
-            let xs = pad unk_id max_len xs in
+            let xs = pad cfg.unk_id max_len xs in
             (xs :: xss, ms :: masks) in
         let xss0, masks = List.fold_right pad_and_mask xss ([], []) in
         let src = Expr.(xss0 |> List.transpose |> List.map embed
@@ -371,7 +371,7 @@ struct
                 let g xs = position (cfg.max_length - 1) max_len xs in
                 xss |> List.map g |> List.transpose |> List.map embed
                     |> Array.of_list |> Expr.concatenate_cols in
-        let dropout = dropout0 cfg.use_dropout cfg.encoder_emb_dropout_rate in
+        let dropout = dropout0 cfg.encoder_emb_dropout_rate in
         let seq = Mask.sequence_mask cg masks in
         let padding_k, padding_q = Mask.padding_positions_mask cfg.nheads seq in
         let masks = Mask.{ seq; padding_k; padding_q; blinding = None } in
@@ -407,7 +407,7 @@ struct
     }
 
     let apply ({cfg} as decl) cg enc_inp dec_inp self_mask src_mask = Expr.(
-        let dropout = dropout0 cfg.use_dropout cfg.decoder_sublayer_dropout_rate in
+        let dropout = dropout0 cfg.decoder_sublayer_dropout_rate in
         MultiHeadAttentionLayer.apply decl.self_attention cg dec_inp dec_inp self_mask
           |> dropout |> (+) dec_inp |> LayerNorm.apply decl.ln1 cg
             |> fun ln -> MultiHeadAttentionLayer.apply decl.src_attention cg ln enc_inp src_mask
@@ -443,13 +443,12 @@ struct
         Expr.lookup_parameter cg dec.embed_t
 
     let compute_embeddings_and_masks ({cfg} as dec) cg xss (* sentences *) src_seq_mask =
-        let unk_id = 9 in
         let max_len = List.maximum_by List.length xss in
         let embed xs = Expr.lookup_batch cg dec.embed_t (Array.of_list xs) in
         let pad_len = max_len + if cfg.is_training then 1 else 0 in
         let pad_and_mask xs (xss, masks) =
             let ms = Array.of_list (mask pad_len xs) in
-            let xs = pad unk_id pad_len xs in
+            let xs = pad cfg.unk_id pad_len xs in
             (xs :: xss, ms :: masks) in
         let xss0, masks = List.fold_right pad_and_mask xss ([], []) in
         let src = Expr.(xss0 |> List.transpose |> List.map embed
@@ -461,14 +460,14 @@ struct
                 let g xs = position (cfg.max_length - 1) pad_len xs in
                 xss |> List.map g |> List.transpose |> List.map embed
                     |> Array.of_list |> Expr.concatenate_cols in
-        let dropout = dropout0 cfg.use_dropout cfg.decoder_emb_dropout_rate in
+        let dropout = dropout0 cfg.decoder_emb_dropout_rate in
         let seq = Mask.sequence_mask cg masks in
-		(* create maskings self-attention for future blinding *)
+        (* create maskings self-attention for future blinding *)
         let blinding = Some (Mask.future_blinding_mask cg pad_len) in
-		(* for padding positions blinding *)
+        (* for padding positions blinding *)
         let padding_k, padding_q = Mask.padding_positions_mask cfg.nheads seq in
         let self_masks = Mask.{ seq; padding_k; padding_q; blinding } in
-		(* source-attention *)
+        (* source-attention *)
         let seq = Mask.sequence_mask ~self:false cg masks in
         let padding_k, padding_q =
             Mask.padding_positions_mask_source cfg.nheads seq src_seq_mask in
@@ -506,7 +505,6 @@ struct
         Encoder.apply t.encoder cg sents
 
     let apply ?(is_eval=false) ({cfg} as t) cg srcs tgts =
-        let unk_id = 9 in
         let max_len = List.maximum_by List.length tgts in
         let src_rep, Mask.{seq} = Encoder.apply t.encoder cg srcs in
         let tgt_rep = Decoder.apply t.decoder cg tgts src_rep seq in
@@ -524,12 +522,10 @@ struct
         let compute_loss i tgt =
             let tgt_xp = Expr.pick ~d:1 tgt_rep i in
             let r = Expr.affine_transform [|bias; emb_tgt; tgt_xp|] in
-            print_dim0 r;
-            List.iter (print_int) tgt;
             let loss_fun = if cfg.use_label_smoothing && not is_eval then
                 neglogsoftmax_smoothed else Expr.pickneglogsoftmax_batch in
             loss_fun r (Array.of_list tgt) in
-        List.(tl @@ transpose @@ map (pad unk_id max_len) tgts)
+        List.(tl @@ transpose @@ map (pad cfg.unk_id max_len) tgts)
             |> List.mapi compute_loss |> Array.of_list |> Expr.sum |> Expr.sum_batches
 
     let step_forward t cg src_rep src_mask sent log_prob =
@@ -543,7 +539,7 @@ struct
 
     let decode_greedy ({cfg} as t) cg src =
         let tgt = [Dict.convert_word t.td "<s>"] in
-        let eos = Dict.convert_word t.td "<s>" in
+        let eos = Dict.convert_word t.td "</s>" in
         let src_rep, Mask.{seq} = Encoder.apply t.encoder cg [src] in
         let rec loop step tgt =
             Cg.checkpoint cg;
@@ -565,6 +561,7 @@ let load_vocab file =
     List.iter read_one ("<unk>" :: "<s>" :: "</s>" :: Utils.read_lines file);
     Dict.freeze d; Dict.set_unk d "<unk>"; d
 
+
 let load_data sd td file =
     let rec sep_on s = function
         | [] -> raise (Invalid_argument "load_data")
@@ -576,19 +573,4 @@ let load_data sd td file =
         (List.map (Dict.convert_word sd) x :: xs,
              List.map (Dict.convert_word sd) y :: ys) in
     List.fold_right f (Utils.read_lines file) ([], [])
-
-let () =
-    let _ = Init.initialize Sys.argv in
-    let m = Model.make () in
-    let enc = Transformer.make m Config.{
-        default with position_encoding = 1;
-        src_vocab_size = 100;
-        tgt_vocab_size = 100;
-        use_label_smoothing = true} (Dict.make()) (Dict.make()) in
-    let xss = [[1;2;3];[1;3;4;3];[1;3;3;3;3;3;3;]] in
-    Cg._with (fun cg ->
-        let res = Transformer.apply ~is_eval:false enc cg xss xss in
-        print_dim (Expr.dim res);
-        print_tensor (Expr.value res)
-    )
 

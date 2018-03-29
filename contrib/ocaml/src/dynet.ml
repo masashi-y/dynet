@@ -15,6 +15,8 @@ module DoubleVector = DoubleVector
 
 module StringVector = StringVector
 
+module UnsignedVector = UnsignedVector
+
 module ParameterVector = ParameterVector
 
 module ExpressionVector = ExpressionVector
@@ -65,3 +67,7 @@ let argmax v =
         else (y, i+1, i))
     (arr.(0), 0, 0) arr in
     max
+
+let vec = FloatVector.of_array
+
+let ivec = UnsignedVector.of_array

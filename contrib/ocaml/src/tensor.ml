@@ -15,6 +15,8 @@ struct Tensor {
 
 let as_scalar t = (_as_scalar t) as float
 let as_vector t = FloatVector.from_ptr (_as_vector t)
+let as_list t = FloatVector.to_list (as_vector t)
+let as_array t = FloatVector.to_array (as_vector t)
 let show t = ((_tensor_show t) as string)
 
 let to_ptr t = t

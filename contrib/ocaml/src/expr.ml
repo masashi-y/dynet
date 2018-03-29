@@ -18,8 +18,10 @@ let const_parameter cg p =
 let const_lookup_parameter cg p =
     Expression.from_ptr (_const_parameter_LookupParameter '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p)))
 
-let lookup cg p i = Expression.from_ptr (_lookup '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (i to uint)))
-let const_lookup cg p i = Expression.from_ptr (_const_lookup '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (i to uint)))
+let lookup cg p i =
+    Expression.from_ptr (_lookup '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (i to uint)))
+let const_lookup cg p i =
+    Expression.from_ptr (_const_lookup '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (i to uint)))
 
 let lookup_batch cg p v =
     Expression.from_ptr (_lookup_vector '((Computationgraph.to_ptr cg), (LookupParameter.to_ptr p), (UnsignedVector.(to_ptr (of_array v)))))
@@ -126,6 +128,7 @@ let logsumexp_dim x d = Expression.from_ptr (_logsumexp_dim '((Expression.to_ptr
 let pickneglogsoftmax x v = Expression.from_ptr (_pickneglogsoftmax '((Expression.to_ptr x), (v to uint)))
 (* let pickneglogsoftmax x = Expression.from_ptr (_pickneglogsoftmax '((Expression.to_ptr x), const unsigned* pv)) *)
 let pickneglogsoftmax_batch x v = Expression.from_ptr (_pickneglogsoftmax '((Expression.to_ptr x), (UnsignedVector.(to_ptr (of_array v)))))
+let pickneglogsoftmax_batch_vec x v = Expression.from_ptr (_pickneglogsoftmax '((Expression.to_ptr x), (UnsignedVector.(to_ptr v))))
 
 let hinge ?(m=1.0) x index = Expression.from_ptr (_hinge '((Expression.to_ptr x), (index to uint), (m to float)))
 (* let hinge x = Expression.from_ptr (_hinge '((Expression.to_ptr x), unsigned* pindex, float m = 1.0)) *)

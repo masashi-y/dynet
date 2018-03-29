@@ -38,15 +38,15 @@ let rec make_batch n lst =
     | _  -> x :: make_batch n xs
 
 let shuffle d =
-    let nd = List.map (fun c -> (Random.bits (), c)) d in
+    let nd = List.rev_map (fun c -> (Random.bits (), c)) d in
     let sond = List.sort compare nd in
-    List.map snd sond
+    List.rev_map snd sond
 
 let shuffle2 d1 d2 =
-    let nd = List.map2 (fun c1 c2 -> (Random.bits (), (c1, c2))) d1 d2 in
+    let nd = List.rev_map2 (fun c1 c2 -> (Random.bits (), (c1, c2))) d1 d2 in
     let sond = List.sort compare nd in
-    List.fold_right (fun (_, (c1, c2)) (l1, l2) ->
-        (c1::l1, c2::l2)) sond ([], [])
+    List.fold_left (fun (l1, l2) (_, (c1, c2)) ->
+        (c1::l1, c2::l2)) ([], []) sond
 
 let accuracy preds golds =
     let preds = List.flatten preds in

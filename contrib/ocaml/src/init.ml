@@ -22,5 +22,5 @@ let initialize argv =
          ("--", Arg.Rest (fun v -> rest := v :: !rest), "") ] in
     Arg.parse_argv argv spec (fun v -> rest := v :: !rest) "";
     ignore (_initialize ps);
-    Array.of_list (List.rev @@ !rest)
+    Array.of_list (Sys.argv.(0) :: (List.rev @@ !rest))
 

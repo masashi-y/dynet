@@ -1,0 +1,7 @@
+
+(executable (
+    (name train)
+    (libraries (dynet utils transformer))
+    (flags (-ccopt -lstdc++))
+))
+

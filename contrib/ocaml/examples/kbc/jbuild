@@ -1,0 +1,8 @@
+
+(executable (
+    (name complex)
+    (libraries (dynet utils))
+    (flags (-ccopt -lstdc++))
+    (preprocess (pps (ppx_deriving_argparse ppx_deriving.show)))
+))
+
